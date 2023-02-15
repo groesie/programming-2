@@ -32,7 +32,7 @@ public:
     uint64_t GetNextPrime(uint64_t number) const {
         auto it = primes_.upper_bound(number);
         if (it == primes_.end())
-            return 0;
+            throw std::invalid_argument("No next prime");
         return *it;
     }
 
