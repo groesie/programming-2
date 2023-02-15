@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <mutex>
+#include <shared_mutex>
 #include <set>
 #include <atomic>
 #include <chrono>
@@ -16,7 +16,7 @@ using namespace std::chrono_literals;
  */
 class PrimeNumbersSet {
     std::set<uint64_t> primes_;
-    std::mutex mutex_;
+    std::shared_mutex mutex_;
     std::chrono::duration<double, std::nano> time_waiting_for_mutex_ = 0ms;
     std::chrono::duration<double, std::nano> time_under_mutex_ = 0ms;
 
