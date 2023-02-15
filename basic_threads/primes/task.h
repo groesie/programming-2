@@ -53,7 +53,9 @@ public:
             isPrime[0] = false;
 
         auto t1 = std::chrono::high_resolution_clock::now();
-        mutex_.lock_shared();
+
+        std::shared_lock lock(mutex_);
+
         auto t2 = std::chrono::high_resolution_clock::now();
         auto t3 = std::chrono::high_resolution_clock::now();
         time_waiting_for_mutex_ = time_waiting_for_mutex_ + t2 - t1;
@@ -64,7 +66,7 @@ public:
 
         auto t4 = std::chrono::high_resolution_clock::now();
         time_under_mutex_ += t4 - t3;
-        mutex_.unlock();
+        // mutex_.unlock();
     }
 
     // Посчитать количество простых чисел в диапазоне [from, to)
