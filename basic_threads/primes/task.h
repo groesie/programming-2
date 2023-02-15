@@ -17,14 +17,11 @@ using namespace std::chrono_literals;
 class PrimeNumbersSet {
     std::set<uint64_t> primes_;
     std::mutex mutex_;
-    std::chrono::duration<double, std::nano> time_waiting_for_mutex_;
-    std::chrono::duration<double, std::nano> time_under_mutex_;
+    std::chrono::duration<double, std::nano> time_waiting_for_mutex_ = 0ms;
+    std::chrono::duration<double, std::nano> time_under_mutex_ = 0ms;
 
 public:
-    PrimeNumbersSet() {
-        time_waiting_for_mutex_ = 0ms;
-        time_under_mutex_ = 0ms;
-    }
+    PrimeNumbersSet() = default;
 
     // Проверка, что данное число присутствует в множестве простых чисел
     bool IsPrime(uint64_t number) const {
@@ -57,7 +54,7 @@ public:
         auto t2 = std::chrono::high_resolution_clock::now();
         auto t3 = std::chrono::high_resolution_clock::now();
         time_waiting_for_mutex_ = time_waiting_for_mutex_ + t2 - t1;
-        for (uint64_t i = 0; i < R - L + 1; ++i)
+        for (uint64_t i = 2; i < R - L + 1; ++i)
             if (isPrime[i])
                 primes_.insert(i + L);
         auto t4 = std::chrono::high_resolution_clock::now();
@@ -68,14 +65,12 @@ public:
 
     // Посчитать количество простых чисел в диапазоне [from, to)
     size_t GetPrimesCountInRange(uint64_t from, uint64_t to) const {
-        return std::count_if(primes_.begin(), primes_.end(), [from, to](uint64_t x) { return x >= from && x <= to; }) - 2;
+        return std::count_if(primes_.begin(), primes_.end(), [from, to](uint64_t x) { return x >= from && x <= to; });
     }
 
     // Получить наибольшее простое число из множества
     uint64_t GetMaxPrimeNumber() const {
-        // return *primes_.rbegin();
         return primes_.empty() ? 0 : *primes_.rbegin();
-        // return 49999991;
     }
 
     // Получить суммарное время, проведенное в ожидании лока мьютекса во время работы функции AddPrimesInRange
