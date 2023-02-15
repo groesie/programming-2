@@ -25,11 +25,14 @@ public:
 
     // Проверка, что данное число присутствует в множестве простых чисел
     bool IsPrime(uint64_t number) const {
+        std::shared_lock lock(mutex_);
         return primes_.find(number) != primes_.end();
     }
 
     // Получить следующее по величине простое число из множества
     uint64_t GetNextPrime(uint64_t number) const {
+        std::shared_lock lock(mutex_);
+
         auto it = primes_.upper_bound(number);
         if (it == primes_.end())
             throw std::invalid_argument("No next prime");
@@ -54,7 +57,7 @@ public:
 
         auto t1 = std::chrono::high_resolution_clock::now();
 
-        std::shared_lock lock(mutex_);
+        std::unique_lock lock(mutex_);
 
         auto t2 = std::chrono::high_resolution_clock::now();
         auto t3 = std::chrono::high_resolution_clock::now();
@@ -71,16 +74,19 @@ public:
 
     // Посчитать количество простых чисел в диапазоне [from, to)
     size_t GetPrimesCountInRange(uint64_t from, uint64_t to) const {
+        std::shared_lock lock(mutex_);
         return std::count_if(primes_.begin(), primes_.end(), [from, to](uint64_t x) { return x >= from && x <= to; });
     }
 
     // Получить наибольшее простое число из множества
     uint64_t GetMaxPrimeNumber() const {
+        std::shared_lock lock(mutex_);
         return primes_.empty() ? 0 : *primes_.rbegin();
     }
 
     // Получить суммарное время, проведенное в ожидании лока мьютекса во время работы функции AddPrimesInRange
     std::chrono::nanoseconds GetTotalTimeWaitingForMutex() const {
+        std::shared_lock lock(mutex_);
         return std::chrono::duration_cast<std::chrono::nanoseconds>(time_waiting_for_mutex_);
     }
 
