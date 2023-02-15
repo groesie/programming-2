@@ -43,24 +43,28 @@ public:
      */
     void AddPrimesInRange(uint64_t L, uint64_t R) {
         std::vector<bool> isPrime(R - L + 1, true);
+
         uint64_t lim = std::sqrt(R);
         for (uint64_t i = 2; i <= lim; ++i)
             for (uint64_t j = std::max(i * i, (L + i - 1) / i * i); j <= R; j += i)
                 isPrime[j - L] = false;
+
         if (L == 1)
             isPrime[0] = false;
+
         auto t1 = std::chrono::high_resolution_clock::now();
-        mutex_.lock();
+        mutex_.lock_shared();
         auto t2 = std::chrono::high_resolution_clock::now();
         auto t3 = std::chrono::high_resolution_clock::now();
         time_waiting_for_mutex_ = time_waiting_for_mutex_ + t2 - t1;
+
         for (uint64_t i = 2; i < R - L + 1; ++i)
             if (isPrime[i])
                 primes_.insert(i + L);
+
         auto t4 = std::chrono::high_resolution_clock::now();
         time_under_mutex_ += t4 - t3;
         mutex_.unlock();
-        return;
     }
 
     // Посчитать количество простых чисел в диапазоне [from, to)
