@@ -20,6 +20,21 @@ public:
      * он указывает.
      * Итератор, созданный в одном потоке, нельзя использовать в другом.
      */
+    ThreadSafeList() {
+        head_ = new Data;
+        tail_ = new Data;
+        tail_->prev = head_;
+    }
+
+    ~ThreadSafeList() {
+        Data* cur = head_;
+        while (cur != tail_) {
+            cur = cur->next;
+            delete cur->prev;
+        }
+        delete cur;
+    }
+
     class Iterator {
     public:
         using pointer = T*;
@@ -28,6 +43,12 @@ public:
         using difference_type = std::ptrdiff_t;
         using iterator_category = std::bidirectional_iterator_tag;
 
+        Iterator(Data* cur) : cur_(cur) { }
+
+        ~Iterator() {
+            cur_->mutex_.unlock();
+        }
+
         T& operator *() {
         }
 
@@ -35,52 +56,101 @@ public:
         }
 
         T* operator ->() {
+            return cur;
         }
 
         const T* operator ->() const {
+            return cur_;
         }
 
         Iterator& operator ++() {
+
+            cur_ = cur_->next;
+            return cur_;
         }
 
         Iterator operator ++(int) {
+            Iterator res = Iterator(cur_);
+            cur_ = cur_->next;
+            return res;
         }
 
         Iterator& operator --() {
+            cur_ = cur_->prev;
+            return cur_;
         }
 
         Iterator operator --(int) {
+            Iterator res = Iterator(cur_);
+            cur_->mutex_.unlock();
+            cur_->prev->mutex_.lock_shared();
+            cur_ = cur_->prev;
+            return res;
         }
 
         bool operator ==(const Iterator& rhs) const {
+            return cur_ == rhs.cur_;
         }
 
         bool operator !=(const Iterator& rhs) const {
+            return cur_ != rhs.cur_;
         }
-
+    private:
+        Data* cur_;
     };
 
     /*
      * Получить итератор, указывающий на первый элемент списка
      */
     Iterator begin() {
+        // head_->next->mutex_
+        return { head_->next };
     }
 
     /*
      * Получить итератор, указывающий на "элемент после последнего" элемента в списке
      */
     Iterator end() {
+        std::unique_lock lock(tail_->mutex_);
+        return { tail_ }
     }
 
     /*
      * Вставить новый элемент в список перед элементом, на который указывает итератор `position`
      */
     void insert(Iterator position, const T& value) {
+        // if (position->cur_ != head_)
+        std::unique_lock lockL(position.cur_->prev->mutex_);
+        std::unique_lock lockC(position.cur_->mutex_);
+        Data* cur = new Data;
+        cur->val = value;
+        cur->prev = position.cur_->prev;
+        cur->next = position.cur_;
+        position.cur_->prev->next = cur;
+        position.cur_->prev = cur;
     }
 
     /*
      * Стереть из списка элемент, на который указывает итератор `position`
      */
     void erase(Iterator position) {
+        // std::unique_lock lockL(position.cur_->prev->mutex_);
+        // std::unique_lock lockC(position.cur_->mutex_);
+        // std::unique_lock lockR(position.cur_->next->mutex_);
+        // position.cur_->next->prev = position.cur->prev;
+        // position.cur->prev->next = position.cur_->next->;
+
+        // delete position.cur_
+
     }
+private:
+    struct Data {
+        Data* next = nullptr;
+        Data* prev = nullptr;
+        T val = NULL;
+        mutable std::shared_mutex mutex_;
+    }
+    Data* head_;
+    Data* tail_;
+
 };
