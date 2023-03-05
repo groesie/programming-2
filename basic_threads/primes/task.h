@@ -92,6 +92,7 @@ public:
 
     // Получить суммарное время, проведенное в коде под локом во время работы функции AddPrimesInRange
     std::chrono::nanoseconds GetTotalTimeUnderMutex() const {
+        std::shared_lock lock{mutex_};
         return std::chrono::duration_cast<std::chrono::nanoseconds>(time_under_mutex_);
     }
 };

@@ -14,6 +14,12 @@
 template<typename T>
 class ThreadSafeList {
 public:
+    struct Data {
+        Data* next = nullptr;
+        Data* prev = nullptr;
+        T val;
+        mutable std::shared_mutex mutex_;
+    };
     /*
      * Класс-итератор, позволяющий обращаться к элементам списка без необходимости использовать мьютекс.
      * При этом должен гарантироваться эксклюзивный доступ потока, в котором был создан итератор, к данным, на которые
@@ -27,8 +33,11 @@ public:
     }
 
     ~ThreadSafeList() {
+        head_->mutex_.lock();
         Data* cur = head_;
         while (cur != tail_) {
+            cur->next->mutex_.lock();
+            // cur->mutex_.unlock();
             cur = cur->next;
             delete cur->prev;
         }
@@ -50,23 +59,35 @@ public:
         }
 
         T& operator *() {
+            // cur_->mutex_.lock();
+            std::shared_lock lock(cur_->mutex_);
+            return cur_->val;
         }
 
         T operator *() const {
+            // cur_->mutex_.lock_shared();
+            std::shared_lock lock(cur_->mutex_);
+            return cur_->val;
         }
 
         T* operator ->() {
-            return cur;
+            // cur_->mutex_.lock();
+            std::shared_lock lock(cur_->mutex_);
+            return &(cur_->val);
         }
 
         const T* operator ->() const {
-            return cur_;
+            // cur_->mutex_.lock_shared();
+            std::shared_lock lock(cur_->mutex_);
+            return &(cur_->val);
         }
 
         Iterator& operator ++() {
-
+            // cur_->mutex_.unlock();
+            std::shared_lock lock(cur_->next->mutex_);
             cur_ = cur_->next;
-            return cur_;
+            // cur_->mutex_.lock_shared();
+            return *this;
         }
 
         Iterator operator ++(int) {
@@ -89,21 +110,26 @@ public:
         }
 
         bool operator ==(const Iterator& rhs) const {
+            std::shared_lock lock(cur_->mutex_);
+            std::shared_lock lock2(rhs.cur_->mutex_);
             return cur_ == rhs.cur_;
         }
 
         bool operator !=(const Iterator& rhs) const {
+            std::shared_lock lock(cur_->mutex_);
+            std::shared_lock lock2(rhs.cur_->mutex_);
             return cur_ != rhs.cur_;
         }
-    private:
         Data* cur_;
+    // private:
     };
 
     /*
      * Получить итератор, указывающий на первый элемент списка
      */
     Iterator begin() {
-        // head_->next->mutex_
+        // head_->next->mutex_.lock_shared();
+        std::shared_lock lock(head_->next->mutex_);
         return { head_->next };
     }
 
@@ -111,8 +137,9 @@ public:
      * Получить итератор, указывающий на "элемент после последнего" элемента в списке
      */
     Iterator end() {
-        std::unique_lock lock(tail_->mutex_);
-        return { tail_ }
+        std::shared_lock lock(tail_->mutex_);
+
+        return { tail_ };
     }
 
     /*
@@ -134,23 +161,17 @@ public:
      * Стереть из списка элемент, на который указывает итератор `position`
      */
     void erase(Iterator position) {
-        // std::unique_lock lockL(position.cur_->prev->mutex_);
-        // std::unique_lock lockC(position.cur_->mutex_);
-        // std::unique_lock lockR(position.cur_->next->mutex_);
-        // position.cur_->next->prev = position.cur->prev;
-        // position.cur->prev->next = position.cur_->next->;
 
-        // delete position.cur_
+        std::unique_lock lockL(position.cur_->prev->mutex_);
+        std::unique_lock lockR(position.cur_->next->mutex_);
+        std::unique_lock lockC(position.cur_->mutex_);
+        position.cur_->next->prev = position.cur->prev;
+        position.cur->prev->next = position.cur_->next;
+
+        delete position.cur_;
 
     }
 private:
-    struct Data {
-        Data* next = nullptr;
-        Data* prev = nullptr;
-        T val = NULL;
-        mutable std::shared_mutex mutex_;
-    }
     Data* head_;
     Data* tail_;
-
 };
