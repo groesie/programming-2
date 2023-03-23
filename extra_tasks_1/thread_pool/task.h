@@ -28,13 +28,90 @@
 
 class ThreadPool {
 public:
-    ThreadPool(size_t threadCount) {}
+    ThreadPool(size_t threadCount) {
+        for (size_t i = 0; i < threadCount; ++i) {
+            threads_.emplace_back([this](){
+                while (true) {
+                    std::function<void()> task;
+                    {
+                        std::unique_lock<std::mutex> lock(mutex_);
+                        while (isActive_ && queueSize_ == 0) {
+                            cv_.wait(lock, [this](){
+                                return !isActive_.load() || queueSize_.load() != 0;
+                            });
+                        }
+                        if (!isActive_ && tasks_.empty()) {
+                            return;
+                        }
+                        task = std::move(tasks_.front());
+                        tasks_.pop();
+                        --queueSize_;
+                    }
+                    // std::unique_lock<std::mutex> lock(mutex_);
+                    task();
+                }
+            });
+        }
+    }
+    // ~ThreadPool() {
+    //     if (isActive_)
+    //         Terminate(true);
+    // }
+    void PushTask(const std::function<void()>& task) {
+        if (!isActive_.load()) {
+            throw std::runtime_error("Thread pool is terminated");
+        }
+        {
+            std::unique_lock<std::mutex> lock(mutex_);
+            tasks_.push(task);
+            ++queueSize_;
+        }
+        cv_.notify_one();
+    }
 
-    void PushTask(const std::function<void()>& task) {}
+    void Terminate(bool wait) {
+        std::unique_lock<std::mutex> tlock(tmutex_);
+        {
+            std::unique_lock<std::mutex> lock(mutex_);
+            if (!isActive_) {
+                return;
+            }
+            isActive_ = false;
+        }
+        cv_.notify_all();
+        if (wait) {
+            // std::unique_lock<std::mutex> lock(mutex_);
+            for (auto& thread : threads_) {
+                thread.join();
+            }
+        } else {
+            std::unique_lock<std::mutex> lock(mutex_);
+            while (queueSize_ != 0) {
+                tasks_.pop();
+                --queueSize_;
+            }
+            for (auto& thread : threads_) {
+                if (thread.joinable())
+                    thread.detach();
+            }
+            // cv_.notify_all();
+        }
+    }
 
-    void Terminate(bool wait) {}
+    bool IsActive() const {
+        return isActive_.load();
+    }
 
-    bool IsActive() const {}
+    size_t QueueSize() const {
+        return queueSize_.load();
+    }
 
-    size_t QueueSize() const {}
+private:
+    std::vector<std::thread> threads_;
+    std::queue<std::function<void()>> tasks_;
+    std::mutex mutex_;
+    std::mutex tmutex_;
+    std::condition_variable cv_;
+    std::atomic<bool> isActive_ = true;
+    std::atomic<size_t> queueSize_ = 0;
 };
