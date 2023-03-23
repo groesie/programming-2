@@ -36,14 +36,14 @@ public:
                     {
                         std::unique_lock<std::mutex> lock(mutex_);
                         cv_.wait(lock, [this](){
-                            return !isActive_.load() || queueSize_.load() != 0;
+                            return !isActive_.load() || !tasks_.empty();
                         });
                         if (!isActive_ && tasks_.empty()) {
                             return;
                         }
                         task = std::move(tasks_.front());
                         tasks_.pop();
-                        --queueSize_;
+                        // --queueSize_;
                     }
                     task();
                 }
@@ -60,9 +60,9 @@ public:
         }
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            tasks_.emplace(task);
-            ++queueSize_;
+            tasks_.push(task);
         }
+        // ++queueSize_;
         cv_.notify_one();
     }
 
@@ -76,19 +76,18 @@ public:
             isActive_ = false;
         }
         if (wait) {
-            // cv_.notify_all();
+            cv_.notify_all();
             for (auto& thread : threads_) {
                 thread.join();
             }
         } else {
             {
                 std::unique_lock<std::mutex> lock(mutex_);
-                while (queueSize_ != 0) {
+                while (!tasks_.empty()) {
                     tasks_.pop();
-                    --queueSize_;
                 }
             }
-            // cv_.notify_all();
+            cv_.notify_all();
             for (auto& thread : threads_) {
                 // if (thread.joinable())
                 thread.join();
@@ -101,13 +100,14 @@ public:
     }
 
     size_t QueueSize() const {
-        return queueSize_.load();
+        std::unique_lock<std::mutex> lock(mutex_);
+        return tasks_.size();
     }
 
 private:
     std::vector<std::thread> threads_;
     std::queue<std::function<void()>> tasks_;
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     std::mutex tmutex_;
     std::condition_variable cv_;
     std::atomic<bool> isActive_ = true;
