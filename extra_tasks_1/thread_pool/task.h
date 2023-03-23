@@ -60,7 +60,7 @@ public:
         }
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            tasks_.push_back(task);
+            tasks_.emplace_back(task);
         }
         // ++queueSize_;
         cv_.notify_one();
