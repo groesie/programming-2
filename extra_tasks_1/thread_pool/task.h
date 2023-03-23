@@ -35,11 +35,9 @@ public:
                     std::function<void()> task;
                     {
                         std::unique_lock<std::mutex> lock(mutex_);
-                        while (isActive_ && queueSize_ == 0) {
-                            cv_.wait(lock, [this](){
-                                return !isActive_.load() || queueSize_.load() != 0;
-                            });
-                        }
+                        cv_.wait(lock, [this](){
+                            return !isActive_.load() || queueSize_.load() != 0;
+                        });
                         if (!isActive_ && tasks_.empty()) {
                             return;
                         }
@@ -69,16 +67,16 @@ public:
     }
 
     void Terminate(bool wait) {
-        std::unique_lock<std::mutex> tlock(tmutex_);
+        // std::unique_lock<std::mutex> tlock(tmutex_);
         {
-            std::unique_lock<std::mutex> lock(mutex_);
+            // std::unique_lock<std::mutex> lock(mutex_);
             if (!isActive_) {
                 return;
             }
             isActive_ = false;
         }
-        cv_.notify_all();
         if (wait) {
+            cv_.notify_all();
             for (auto& thread : threads_) {
                 thread.join();
             }
@@ -89,7 +87,8 @@ public:
                     tasks_.pop();
                     --queueSize_;
                 }
-            }    
+            }
+            cv_.notify_all();
             for (auto& thread : threads_) {
                 if (thread.joinable())
                     thread.join();
