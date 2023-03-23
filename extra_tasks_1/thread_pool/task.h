@@ -47,7 +47,6 @@ public:
                         tasks_.pop();
                         --queueSize_;
                     }
-                    // std::unique_lock<std::mutex> lock(mutex_);
                     task();
                 }
             });
@@ -80,21 +79,21 @@ public:
         }
         cv_.notify_all();
         if (wait) {
-            // std::unique_lock<std::mutex> lock(mutex_);
             for (auto& thread : threads_) {
                 thread.join();
             }
         } else {
-            std::unique_lock<std::mutex> lock(mutex_);
-            while (queueSize_ != 0) {
-                tasks_.pop();
-                --queueSize_;
-            }
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                while (queueSize_ != 0) {
+                    tasks_.pop();
+                    --queueSize_;
+                }
+            }    
             for (auto& thread : threads_) {
                 if (thread.joinable())
-                    thread.detach();
+                    thread.join();
             }
-            // cv_.notify_all();
         }
     }
 
