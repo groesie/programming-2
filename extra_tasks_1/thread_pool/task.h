@@ -91,7 +91,7 @@ public:
             cv_.notify_all();
             for (auto& thread : threads_) {
                 // if (thread.joinable())
-                thread.join();
+                thread.detach();
             }
         }
     }
