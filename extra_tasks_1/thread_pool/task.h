@@ -60,7 +60,7 @@ public:
         }
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            tasks_.push(task);
+            tasks_.emplace(task);
             ++queueSize_;
         }
         cv_.notify_one();
@@ -76,7 +76,7 @@ public:
             isActive_ = false;
         }
         if (wait) {
-            cv_.notify_all();
+            // cv_.notify_all();
             for (auto& thread : threads_) {
                 thread.join();
             }
@@ -88,10 +88,10 @@ public:
                     --queueSize_;
                 }
             }
-            cv_.notify_all();
+            // cv_.notify_all();
             for (auto& thread : threads_) {
-                if (thread.joinable())
-                    thread.join();
+                // if (thread.joinable())
+                thread.join();
             }
         }
     }
