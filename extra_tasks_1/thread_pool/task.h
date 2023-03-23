@@ -42,7 +42,7 @@ public:
                             return;
                         }
                         task = std::move(tasks_.front());
-                        tasks_.pop();
+                        tasks_.pop_front();
                         // --queueSize_;
                     }
                     task();
@@ -60,7 +60,7 @@ public:
         }
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            tasks_.push(task);
+            tasks_.push_back(task);
         }
         // ++queueSize_;
         cv_.notify_one();
@@ -83,9 +83,9 @@ public:
         } else {
             {
                 std::unique_lock<std::mutex> lock(mutex_);
-                while (!tasks_.empty()) {
-                    tasks_.pop();
-                }
+                // while (!tasks_.empty()) {
+                tasks_.clear();
+                // }
             }
             cv_.notify_all();
             for (auto& thread : threads_) {
@@ -106,7 +106,7 @@ public:
 
 private:
     std::vector<std::thread> threads_;
-    std::queue<std::function<void()>> tasks_;
+    std::deque<std::function<void()>> tasks_;
     mutable std::mutex mutex_;
     std::mutex tmutex_;
     std::condition_variable cv_;
