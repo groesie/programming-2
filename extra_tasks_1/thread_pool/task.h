@@ -36,7 +36,7 @@ public:
                     {
                         std::unique_lock<std::mutex> lock(mutex_);
                         cv_.wait(lock, [this](){
-                            return !isActive_ || !tasks_.empty();
+                            return !isActive_.load() || !tasks_.empty();
                         });
                         if (!isActive_ && tasks_.empty()) {
                             return;
@@ -50,15 +50,17 @@ public:
             });
         }
     }
-
+    // ~ThreadPool() {
+    //     if (isActive_)
+    //         Terminate(true);
+    // }
     void PushTask(const std::function<void()>& task) {
-        
+        if (!isActive_.load()) {
+            throw std::runtime_error("Thread pool is terminated");
+        }
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            if (!isActive_) {
-                throw std::runtime_error("Thread pool is terminated");
-            }
-            tasks_.emplace_back(std::move(task));
+            tasks_.push_back(task);
         }
         // ++queueSize_;
         cv_.notify_one();
@@ -67,7 +69,7 @@ public:
     void Terminate(bool wait) {
         // std::unique_lock<std::mutex> tlock(tmutex_);
         {
-            std::unique_lock<std::mutex> lock(mutex_);
+            // std::unique_lock<std::mutex> lock(mutex_);
             if (!isActive_) {
                 return;
             }
@@ -94,8 +96,7 @@ public:
     }
 
     bool IsActive() const {
-        std::unique_lock<std::mutex> lock(mutex_);
-        return isActive_;
+        return isActive_.load();
     }
 
     size_t QueueSize() const {
@@ -107,8 +108,9 @@ private:
     std::vector<std::thread> threads_;
     std::deque<std::function<void()>> tasks_;
     mutable std::mutex mutex_;
-    // std::mutex tmutex_;
+    std::mutex tmutex_;
     std::condition_variable cv_;
-    bool isActive_ = true;
-    // std::atomic<size_t> queueSize_ = 0;
+    std::atomic<bool> isActive_ = true;
+    std::atomic<size_t> queueSize_ = 0;
 };
+
