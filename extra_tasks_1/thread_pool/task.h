@@ -50,10 +50,7 @@ public:
             });
         }
     }
-    // ~ThreadPool() {
-    //     if (isActive_)
-    //         Terminate(true);
-    // }
+
     void PushTask(const std::function<void()>& task) {
         
         {
@@ -61,7 +58,7 @@ public:
             if (!isActive_) {
                 throw std::runtime_error("Thread pool is terminated");
             }
-            tasks_.emplace_back(task);
+            tasks_.emplace_back(std::move(task));
         }
         // ++queueSize_;
         cv_.notify_one();
@@ -91,7 +88,7 @@ public:
             cv_.notify_all();
             for (auto& thread : threads_) {
                 // if (thread.joinable())
-                thread.detach();
+                thread.join();
             }
         }
     }
