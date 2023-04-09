@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include <openssl/sha.h>
@@ -211,20 +213,3 @@ std::unordered_map<std::string, TorElement*> readDict(std::ifstream &tstream) {
     tstream.close();
     return tfile;
 }
-// std::string announce;
-// std::string comment;
-// std::vector<std::string> pieceHashes;
-// size_t pieceLength;
-// size_t length;
-// std::string name;
-// std::string infoHash;
-
-
-// int main() {
-//     std::string filename("./resources/debian.iso.torrent");
-//     LoadTorrentFile(filename);
-
-//     return 0;
-// }
-// Debian CD from cdimage.debian.org
-// 6d4795dee70aeb88e03e5336ca7c9fcf0a1e206d
