@@ -47,10 +47,8 @@ std::string readArr(std::ifstream &tstream) {
         len = len * 10 + cur - '0';
         tstream >> cur;
     }
-    std::cout << len << std::endl;
     for (int i = 0; i < len; ++i) {
         tstream >> cur;
-        std::cout << cur << ' ' << "Arr" << std::endl;
         res.push_back(cur);
     }
     // if (len == 94) exit(0);
@@ -61,11 +59,9 @@ uint64_t readInt(std::ifstream &tstream) {
     char cur;
     tstream >> cur;
     uint64_t res = 0;
-    std::cout << cur << std::endl;
     while(cur != 'e') {
         res = res * 10 + cur - '0';
         tstream >> cur;
-        // std::cout << cur << ' ' << "Int" << std::endl;
     }
     return res;
 }
@@ -126,7 +122,6 @@ std::unordered_map<std::string, TorElement*> readDict(std::ifstream &tstream) {
             procKey = true;
         }
     }
-    std::cout << "win" << std::endl;
     return std::move(res);
 }
 /*
@@ -168,15 +163,8 @@ std::unordered_map<std::string, TorElement*> readDict(std::ifstream &tstream) {
     
     tfile.comment = std::get<0>(d["comment"]->value);
 
-    for (auto &[k, v]: d) {
-        std::cout << k << ' ';
-    }
-    std::cout << std::endl;
     std::unordered_map<std::string, TorElement*> d_info = std::get<1>(d["info"]->value);
-    for (auto &[k, v]: d_info) {
-        std::cout << k << ' ';
-    }
-    std::cout << std::endl;
+
     tfile.name = std::get<0>(d_info["name"]->value);
     tfile.length = std::get<3>(d_info["length"]->value);
     std::vector<std::string> pieceHashes;
@@ -187,28 +175,17 @@ std::unordered_map<std::string, TorElement*> readDict(std::ifstream &tstream) {
     }
     tfile.pieceHashes = pieceHashes;
     size_t info_len = info_end - info_start + 1;
-    std::cout << info_start << ' ' << info_end << std::endl;
     char info[info_len];
     unsigned char hbuf[SHA_DIGEST_LENGTH];
-    // std::ifstream tstream(filename);
     tstream.open(filename);
     tstream.unsetf(std::ios_base::skipws);
     tstream.seekg(info_start - 1);
-    // for (int i = 0; i < info_len; ++i) {
-    //     tstream >> &(info[i]);
-    // }
+
     tstream.read(info, info_len);
-    // std::cout << info << std::endl;
-    // printf("%s--\n", info);
-    for (int i = 0; i < info_len; ++i) {
-        std::cout << info[i];
-    }
-    std::cout << "--" << std::endl;
+
     SHA1(reinterpret_cast<unsigned char const* >(info), info_len, hbuf);
     std::string info_hash(reinterpret_cast< char const* >(hbuf), SHA_DIGEST_LENGTH);
     tfile.infoHash = info_hash;
-    std::cout << tfile.infoHash << '\n';
-    std::cout << tfile.infoHash.size() << '\n';
 
     tstream.close();
     return tfile;
