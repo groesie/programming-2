@@ -189,32 +189,30 @@ public:
             Peer peer;
             std::string ip[4];
 
-            uint8_t byte;
-            std::stringstream ss;
-            ss << cur_byte;
-            ss >> std::hex >> byte;
-            ip[0] = std::to_string(byte);
+            // uint8_t byte;
+            // std::stringstream ss;
+            // ss << cur_byte;
+            // ss >> std::hex >> byte;
+            ip[0] = std::to_string((int)cur_byte);
 
             for (int chunk_i = 1; chunk_i < 4; ++chunk_i) {
                 peerstream >> cur_byte;
-                ss << cur_byte;
-                ss >> std::hex >> byte;
-                ip[chunk_i] = std::to_string(byte);
+                ip[chunk_i] = std::to_string((int)cur_byte);
             }
             peer.ip = ip[0] + "." + ip[1] + "." + ip[2] + "." + ip[3];
             // std::cout << "<--- ";
             int port;
             peerstream >> cur_byte;
             // std::cout << cur_byte << ' ';
-            ss << cur_byte;
-            ss >> std::hex >> byte;
-            port = byte * 256;
+            // ss << cur_byte;
+            // ss >> std::hex >> byte;
+            port = (int)cur_byte * 256;
             peerstream >> cur_byte;
             // std::cout << cur_byte << ' ';
-            ss << cur_byte;
-            ss >> std::hex >> byte;
-            port += byte;
-            
+            // ss << cur_byte;
+            // ss >> std::hex >> byte;
+            port += (int)cur_byte;
+
             peer.port = port;
 
 
