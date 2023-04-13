@@ -207,14 +207,14 @@ public:
             peerstream >> cur_byte;
             // std::cout << cur_byte << ' ';
             ss << cur_byte;
-            ss >> std::hex >> port;
-            port *= 256;
+            ss >> std::hex >> byte;
+            port = byte * 256;
             peerstream >> cur_byte;
             // std::cout << cur_byte << ' ';
             ss << cur_byte;
             ss >> std::hex >> byte;
             port += byte;
-
+            
             peer.port = port;
 
 
