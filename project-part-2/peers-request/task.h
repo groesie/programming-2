@@ -184,7 +184,7 @@ public:
         // std::cout << d.size() << "-----" << std::endl;
         std::stringstream peerstream(std::get<0>(d["peers"]->value));
 
-        unsigned char cur_byte;
+        char cur_byte;
         while (peerstream >> cur_byte) {
             Peer peer;
             std::string ip[4];
@@ -193,11 +193,11 @@ public:
             // std::stringstream ss;
             // ss << cur_byte;
             // ss >> std::hex >> byte;
-            ip[0] = std::to_string((int)cur_byte);
+            ip[0] = std::to_string((int)(unsigned char)cur_byte);
 
             for (int chunk_i = 1; chunk_i < 4; ++chunk_i) {
                 peerstream >> cur_byte;
-                ip[chunk_i] = std::to_string((int)cur_byte);
+                ip[chunk_i] = std::to_string((int)(unsigned char)cur_byte);
             }
             peer.ip = ip[0] + "." + ip[1] + "." + ip[2] + "." + ip[3];
             // std::cout << "<--- ";
@@ -206,12 +206,12 @@ public:
             // std::cout << cur_byte << ' ';
             // ss << cur_byte;
             // ss >> std::hex >> byte;
-            port = (int)cur_byte * 256;
+            port = (int)(unsigned char)cur_byte * 256;
             peerstream >> cur_byte;
             // std::cout << cur_byte << ' ';
             // ss << cur_byte;
             // ss >> std::hex >> byte;
-            port += (int)cur_byte;
+            port += (int)(unsigned char)cur_byte;
 
             peer.port = port;
 
