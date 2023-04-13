@@ -202,11 +202,23 @@ public:
                 ip[chunk_i] = std::to_string(byte);
             }
             peer.ip = ip[0] + "." + ip[1] + "." + ip[2] + "." + ip[3];
-            for (int chunk_i = 0; chunk_i < 2; ++chunk_i) {
-                peerstream >> cur_byte;
-                ss << cur_byte;
-            }
-            ss >> std::hex >> peer.port;
+            // std::cout << "<--- ";
+            int port;
+            peerstream >> cur_byte;
+            // std::cout << cur_byte << ' ';
+            ss << cur_byte;
+            ss >> std::hex >> port;
+            port *= 256;
+            peerstream >> cur_byte;
+            // std::cout << cur_byte << ' ';
+            ss << cur_byte;
+            ss >> std::hex >> byte;
+            port += byte;
+
+            peer.port = port;
+
+
+            // std::cout << peer.port << "--->" << std::endl;
 
             peers_.emplace_back(std::move(peer));
         }
