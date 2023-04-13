@@ -3,9 +3,11 @@
 #include <string>
 #include <chrono>
 
+// В данном задании нужно реализовать класс TcpConnect, с помощью которого происходит подключение к пирам по протоколу TCP.
 /*
  * Обертка над низкоуровневой структурой сокета.
  */
+
 class TcpConnect {
 public:
     TcpConnect(std::string ip, int port, std::chrono::milliseconds connectTimeout, std::chrono::milliseconds readTimeout);
