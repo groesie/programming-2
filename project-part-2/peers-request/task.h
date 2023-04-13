@@ -119,9 +119,9 @@ std::unordered_map<std::string, TorElement*> readDict(std::stringstream &tstream
 TorElement *getRoot(std::stringstream &tstream) {
     char cur;
     TorElement *root = new TorElement;
-    std::cout << "cur" << std::endl;
+    // std::cout << "cur" << std::endl;
     while (tstream >> cur) {
-        std::cout << cur << std::endl;
+        // std::cout << cur << std::endl;
         if (cur >= '0' && cur <= '9') {
             root->value = readArr(tstream);
         } else if (cur == 'd') {
@@ -141,7 +141,7 @@ public:
      * url - адрес трекера, берется из поля announce в .torrent-файле
      */
     TorrentTracker(const std::string& url) : url_(url) {
-        std::cout << url_ << std::endl;
+        // std::cout << url_ << std::endl;
     };
 
     /*
@@ -171,17 +171,17 @@ public:
         );
         std::string tdata(std::move(res.text));
 
-        std::cout << tdata << std::endl;
+        // std::cout << tdata << std::endl;
 
         std::stringstream tstream(tdata);
         tstream.unsetf(std::ios_base::skipws);
 
-        std::cout <<  "-----" << std::endl;
+        // std::cout <<  "-----" << std::endl;
         TorElement *root = getRoot(tstream);
 
-        std::cout <<  "-----" << std::endl;
+        // std::cout <<  "-----" << std::endl;
         std::unordered_map<std::string, TorElement*> d = std::get<1>(root->value);
-        std::cout << d.size() << "-----" << std::endl;
+        // std::cout << d.size() << "-----" << std::endl;
         std::stringstream peerstream(std::move(std::get<0>(d["peers"]->value)));
 
         unsigned char cur_byte;
@@ -238,23 +238,17 @@ TorrentFile LoadTorrentFile(const std::string& filename) {
     TorElement *root = getRoot(tstream);
 
     TorrentFile tfile;
-    std::cout << 1 << std::endl;
+
     std::unordered_map<std::string, TorElement*> d = std::get<1>(root->value);
     tfile.announce = std::get<0>(d["announce"]->value);
-    std::cout << 1 << std::endl;
     tfile.comment = std::get<0>(d["comment"]->value);
-    std::cout << 1 << std::endl;
 
     std::unordered_map<std::string, TorElement*> d_info = std::get<1>(d["info"]->value);
-    std::cout << 1 << std::endl;
 
     tfile.name = std::get<0>(d_info["name"]->value);
-    std::cout << 1 << std::endl;
     tfile.length = std::get<3>(d_info["length"]->value);
-    std::cout << 1 << std::endl;
     std::vector<std::string> pieceHashes;
     std::string pieces = std::get<0>(d_info["pieces"]->value);
-    std::cout << 1 << std::endl;
     tfile.pieceLength = std::get<3>(d_info["piece length"]->value);
 
     for (int i = 0; i < pieces.size(); i += tfile.pieceLength) {
@@ -278,7 +272,7 @@ TorrentFile LoadTorrentFile(const std::string& filename) {
     tifstream.seekg(info_start - 1);
 
     tifstream.read(info, info_len);
-    std::cout << info[0] << "---" << std::endl;
+    // std::cout << info[0] << "---" << std::endl;
     SHA1(reinterpret_cast<unsigned char const* >(info), info_len, hbuf);
 
     std::string info_hash(reinterpret_cast< char const* >(hbuf), SHA_DIGEST_LENGTH);
