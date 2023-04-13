@@ -182,7 +182,7 @@ public:
         // std::cout <<  "-----" << std::endl;
         std::unordered_map<std::string, TorElement*> d = std::get<1>(root->value);
         // std::cout << d.size() << "-----" << std::endl;
-        std::stringstream peerstream(std::move(std::get<0>(d["peers"]->value)));
+        std::stringstream peerstream(std::get<0>(d["peers"]->value));
 
         unsigned char cur_byte;
         while (peerstream >> cur_byte) {
