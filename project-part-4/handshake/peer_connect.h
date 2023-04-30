@@ -3,6 +3,15 @@
 #include "tcp_connect.h"
 #include "peer.h"
 #include "torrent_file.h"
+#include "byte_tools.h"
+#include "peer_connect.h"
+#include "message.h"
+#include <iostream>
+#include <sstream>
+#include <utility>
+#include <cassert>
+
+using namespace std::chrono_literals;
 
 /*
  * Структура, хранящая информацию о доступности частей скачиваемого файла у данного пира
@@ -44,11 +53,14 @@ public:
     PeerConnect(const Peer& peer, const TorrentFile& tf, std::string selfPeerId);
 
     /*
+     * - Уже реализован, код писать не нужно
      * Основная функция, в которой будет происходить цикл общения с пиром.
      * https://wiki.theory.org/BitTorrentSpecification#Messages
      */
     void Run();
-
+    /*
+     * - Уже реализован, код писать не нужно
+     */
     void Terminate();
 protected:
     const TorrentFile& tf_;
@@ -69,6 +81,7 @@ protected:
     void PerformHandshake();
 
     /*
+     * - Уже реализован, код писать не нужно
      * - Провести handshake
      * - Получить bitfield с информацией о наличии у пира различных частей файла
      * - Сообщить пиру, что мы готовы получать от него данные (отправить interested)
@@ -90,5 +103,6 @@ protected:
      */
     void SendInterested();
 
+    // Уже реализован, код писать не нужно
     virtual void MainLoop();
 };

@@ -1,20 +1,105 @@
-#include "tcp_connect.h"
 #include "byte_tools.h"
-
+#include "tcp_connect.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <stdexcept>
-#include <cstring>
-#include <iostream>
-#include <chrono>
-#include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/poll.h>
-#include <limits>
-#include <utility>
+#include <poll.h>
+#include <cstring>
+#include <stdexcept>
 
-const std::string &TcpConnect::GetIp() const {
+TcpConnect::TcpConnect(std::string ip, int port, std::chrono::milliseconds connectTimeout, std::chrono::milliseconds readTimeout)
+    : ip_(std::move(ip)), port_(port), connectTimeout_(connectTimeout), readTimeout_(readTimeout), sock_(-1) {}
+
+TcpConnect::~TcpConnect() {
+    if (sock_ >= 0) {
+        CloseConnection();
+    }
+}
+
+void TcpConnect::EstablishConnection() {
+    sock_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock_ < 0) {
+        throw std::runtime_error(std::string("Error creating socket: ") + strerror(errno));
+    }
+
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port_);
+    inet_pton(AF_INET, ip_.c_str(), &addr.sin_addr);
+
+    int flags = fcntl(sock_, F_GETFL, 0);
+    fcntl(sock_, F_SETFL, flags | O_NONBLOCK);
+
+    int res = connect(sock_, (struct sockaddr*)&addr, sizeof(addr));
+    if (res < 0 && errno != EINPROGRESS) {
+        throw std::runtime_error(std::string("Error connecting to the server: ") + strerror(errno));
+    }
+
+    struct pollfd pfd;
+    pfd.fd = sock_;
+    pfd.events = POLLOUT;
+
+    int poll_res = poll(&pfd, 1, connectTimeout_.count());
+    if (poll_res <= 0) {
+        CloseConnection();
+        throw std::runtime_error("Connection timeout");
+    }
+
+    fcntl(sock_, F_SETFL, flags);
+
+    int error = 0;
+    socklen_t error_len = sizeof(error);
+    getsockopt(sock_, SOL_SOCKET, SO_ERROR, &error, &error_len);
+    if (error != 0) {
+        throw std::runtime_error(std::string("Error during connection: ") + strerror(error));
+    }
+}
+
+void TcpConnect::SendData(const std::string& data) const {
+    ssize_t sent_bytes = send(sock_, data.data(), data.size(), 0);
+    if (sent_bytes < 0) {
+        throw std::runtime_error(std::string("Error sending data: ") + strerror(errno));
+    }
+}
+
+std::string TcpConnect::ReceiveData(size_t bufferSize) const {
+    struct pollfd pfd;
+    pfd.fd = sock_;
+    pfd.events = POLLIN;
+
+    int poll_res = poll(&pfd, 1, readTimeout_.count());
+    if (poll_res <= 0) {
+        throw std::runtime_error("Read timeout");
+    }
+
+    if (bufferSize == 0) {
+        uint32_t msg_size;
+        ssize_t recv_bytes = recv(sock_, &msg_size, sizeof(msg_size), 0);
+        if (recv_bytes < 0) {
+            throw std::runtime_error(std::string("Error receiving data: ") + strerror(errno));
+        }
+        bufferSize = ntohl(msg_size);
+    }
+
+    std::string buffer(bufferSize, '\0');
+    ssize_t recv_bytes = recv(sock_, &buffer[0], bufferSize, 0);
+    if (recv_bytes < 0) {
+        throw std::runtime_error(std::string("Error receiving data: ") + strerror(errno));
+    }
+
+    buffer.resize(recv_bytes);
+    return buffer;
+}
+
+void TcpConnect::CloseConnection() {
+    if (sock_ >= 0) {
+        close(sock_);
+        sock_ = -1;
+    }
+}
+
+const std::string& TcpConnect::GetIp() const {
     return ip_;
 }
 
