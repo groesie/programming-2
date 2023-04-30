@@ -7,7 +7,6 @@
 #include <cassert>
 #include <stdexcept>
 
-
 using namespace std::chrono_literals;
 
 
