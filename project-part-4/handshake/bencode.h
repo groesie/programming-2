@@ -8,6 +8,7 @@
 #include <map>
 #include <sstream>
 #include <unordered_map>
+#include <algorithm>
 
 namespace Bencode {
     struct TorElement {
