@@ -1,19 +1,37 @@
-from collections.abc import Callable, Hashable, Iterable
 from collections import OrderedDict, namedtuple
-from functools import wraps
 
-def lru_cache(max_items: int) -> Callable:
-    """
-    Функция создает декоратор, позволяющий кэшировать результаты выполнения обернутой функции по принципу LRU-кэша.
-    Размер LRU кэша ограничен количеством max_items. При попытке сохранить новый результат в кэш, в том случае, когда
-    размер кэша уже равен max_size, происходит удаление одного из старых элементов, сохраненных в кэше.
-    Удаляется тот элемент, к которому обращались давнее всего.
-    Также у обернутой функции должен появиться атрибут stats, в котором лежит объект с атрибутами cache_hits и
-    cache_misses, подсчитывающие количество успешных и неуспешных использований кэша.
-    :param max_items: максимальный размер кэша.
-    :return: декоратор, добавляющий LRU-кэширование для обернутой функции.
-    """
-    def decorator(f):
-        return f
 
-    return decorator
+class CacheInfo(namedtuple('CacheInfo', ['cache_hits', 'cache_misses'])):
+    def __repr__(self):
+        return f'CacheInfo(hits={self.cache_hits}, misses={self.cache_misses})'
+
+
+class lru_cache:
+    def __init__(self, max_items: int):
+        self.cache = OrderedDict()
+        self.stats = CacheInfo(0, 0)
+        self.max_items = max_items
+        self.function = None
+
+    def __call__(self, *args, **kwargs):
+        if self.function is None:
+            self.function = args[0]
+            self.__name__ = self.function.__name__
+            self.__doc__ = self.function.__doc__
+            self.__module__ = self.function.__module__
+            return self
+        
+        key = str(args)
+        if kwargs:
+            key += str(sorted(kwargs.items()))
+        if key in self.cache:
+            value = self.cache.pop(key)
+            self.cache[key] = value
+            self.stats = CacheInfo(self.stats.cache_hits + 1, self.stats.cache_misses)
+        else:
+            self.stats = CacheInfo(self.stats.cache_hits, self.stats.cache_misses + 1)
+            value = self.function(*args, **kwargs)
+            self.cache[key] = value
+            if len(self.cache) > self.max_items:
+                self.cache.popitem(last=False)
+        return value
