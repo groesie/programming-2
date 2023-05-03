@@ -7,4 +7,13 @@ def flatten(iterable: Iterable) -> Generator:
     Для любых итерируемых вложенных объектов, не являющихся строками, нужно делать рекурсивный заход.
     В результате генератор должен пробегать по всем вложенным объектам на любом уровне вложенности.
     """
-    pass
+    if not isinstance(iterable, Iterable) or isinstance(iterable, str):
+        yield iterable
+        return
+
+    for elem in iterable:
+        if isinstance(elem, Iterable):
+            for inner in flatten(elem):
+                yield inner
+        else:
+            yield elem
