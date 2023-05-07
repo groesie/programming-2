@@ -25,6 +25,7 @@ void PeerConnect::Run() {
 
 bool PeerConnect::EstablishConnection() {
     try {
+        socket_.EstablishConnection();
         PerformHandshake();
         ReceiveBitfield();
         SendInterested();

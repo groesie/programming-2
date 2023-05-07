@@ -1,13 +1,12 @@
 #include "message.h"
+#include <arpa/inet.h>
 
 
 std::string Message::ToString() const {
     std::string messageString;
-    messageString += (messageLength >> 24) & 0xFF;
-    messageString += (messageLength >> 16) & 0xFF;
-    messageString += (messageLength >> 8) & 0xFF;
-    messageString += messageLength & 0xFF;
-    messageString += static_cast<uint8_t>(id);
+    uint32_t length = htonl(static_cast<uint32_t>(messageLength));
+    messageString += reinterpret_cast<const char*>(&length);
+    messageString += reinterpret_cast<const char*>(&id);
     messageString += payload;
     return messageString;
 }
