@@ -60,7 +60,7 @@ PeerPiecesAvailability::PeerPiecesAvailability(std::string bitfield)
     : bitfield_(std::move(bitfield)) {}
 
 bool PeerPiecesAvailability::IsPieceAvailable(size_t pieceIndex) const {
-    return (bitfield_[pieceIndex / 8] >> (7 - pieceIndex % 8)) & 1;
+    return (bitfield_[pieceIndex / 8] & (1 << (7 - pieceIndex % 8)) & 1);
 }
 
 void PeerPiecesAvailability::SetPieceAvailability(size_t pieceIndex) {
@@ -81,7 +81,8 @@ void PeerConnect::PerformHandshake() {
 
     socket_.SendData(handshake);
     std::string response = socket_.ReceiveData(68);  // размер handshake сообщения
-    std::cerr << response << std::endl; // debug
+    std::cerr << response.size() << std::endl; // debug
+    std::cout << response.size() << std::endl; // debug
     std::cerr << "cerr " << std::endl;
     std::cout << "cout " << std::endl;
     if (response.substr(0, 28) != "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" ||
@@ -97,7 +98,7 @@ void PeerConnect::ReceiveBitfield() {
     int messageLength = BytesToInt(response.substr(0, 4));
     uint8_t messageId = response[4];
     if (messageId == 5) {
-        piecesAvailability_ = PeerPiecesAvailability(response.substr(5, messageLength - 1));
+        piecesAvailability_ = PeerPiecesAvailability(response.substr(1));
     } else if (messageId == 1) {
         choked_ = false;
     } else {
@@ -106,6 +107,10 @@ void PeerConnect::ReceiveBitfield() {
 }
 
 void PeerConnect::SendInterested() {
-    std::string message = "\x00\x00\x00\x01\x02";
-    socket_.SendData(message);
+    Message ms;
+
+    ms = ms.Init(MessageId::Interested, std::string());
+    std::string data = ms.ToString();
+
+    socket_.SendData(data);
 }
