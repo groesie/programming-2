@@ -72,12 +72,12 @@ size_t PeerPiecesAvailability::Size() const {
 }
 
 PeerConnect::PeerConnect(const Peer& peer, const TorrentFile& tf, std::string selfPeerId)
-    : tf_(tf), socket_(peer.ip, peer.port, 2s, 5s), selfPeerId_(std::move(selfPeerId)), terminated_(false), choked_(true) { }
+    : tf_(tf), socket_(peer.ip, peer.port, 2s, 2s), selfPeerId_(std::move(selfPeerId)), terminated_(false), choked_(true) { }
 
 void PeerConnect::PerformHandshake() {
     socket_.EstablishConnection();
 
-    std::string handshake = "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" + tf_.infoHash + selfPeerId_;
+    std::string handshake = char(19) + "BitTorrent protocol" + char(0) + char(0) + char(0) + char(0) + char(0) + char(0) + char(0) + char(0) + tf_.infoHash + selfPeerId_;
 
     socket_.SendData(handshake);
     std::string response = socket_.ReceiveData(68);  // размер handshake сообщения
