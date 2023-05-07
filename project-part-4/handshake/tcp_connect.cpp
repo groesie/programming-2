@@ -85,20 +85,21 @@ std::string TcpConnect::ReceiveData(size_t bufferSize) const {
     std::string buffer(bufferSize, '\0');
     size_t recv_total = 0;
     size_t cur = 0;
-    // auto startTime = std::chrono::steady_clock::now();
-    // do{
-    //     auto diff = std::chrono::steady_clock::now() - startTime;
-    //     if (std::chrono::duration_cast<std::chrono::milliseconds> (diff) > readTimeout_ / 2){
-    //         throw std::runtime_error("Read timeout");
-    //     }
-    while (recv_total < bufferSize) {
+    auto startTime = std::chrono::steady_clock::now();
+    do{
+        auto diff = std::chrono::steady_clock::now() - startTime;
+        if (std::chrono::duration_cast<std::chrono::milliseconds> (diff) > readTimeout_ / 2) {
+            throw std::runtime_error("Read timeout");
+        }
+
         ssize_t recv_bytes = recv(sock_, &buffer[cur], bufferSize, 0);
         if (recv_bytes < 0) {
             throw std::runtime_error(std::string("Error receiving data: ") + strerror(errno));
         }
         recv_total += recv_bytes;
         cur = recv_total;
-    }
+    } while (recv_total < bufferSize);
+    
 
     buffer.resize(recv_total);
     return buffer;
