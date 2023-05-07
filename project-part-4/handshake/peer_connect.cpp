@@ -72,7 +72,7 @@ size_t PeerPiecesAvailability::Size() const {
 }
 
 PeerConnect::PeerConnect(const Peer& peer, const TorrentFile& tf, std::string selfPeerId)
-    : tf_(tf), socket_(peer.ip, peer.port, 2s, 2s), selfPeerId_(std::move(selfPeerId)), terminated_(false), choked_(true) { }
+    : tf_(tf), socket_(peer.ip, peer.port, 2s, 5s), selfPeerId_(std::move(selfPeerId)), terminated_(false), choked_(true) { }
 
 void PeerConnect::PerformHandshake() {
     socket_.EstablishConnection();
