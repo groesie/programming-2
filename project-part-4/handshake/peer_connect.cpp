@@ -89,7 +89,7 @@ void PeerConnect::PerformHandshake() {
         throw std::runtime_error("Invalid handshake response");
     }
     peerId_ = response.substr(48, 20);
-}
+} 
 
 
 void PeerConnect::ReceiveBitfield() {
