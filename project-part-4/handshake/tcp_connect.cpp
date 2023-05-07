@@ -83,12 +83,18 @@ std::string TcpConnect::ReceiveData(size_t bufferSize) const {
     }
 
     std::string buffer(bufferSize, '\0');
-    ssize_t recv_bytes = recv(sock_, &buffer[0], bufferSize, 0);
-    if (recv_bytes < 0) {
-        throw std::runtime_error(std::string("Error receiving data: ") + strerror(errno));
+    size_t recv_total = 0;
+    size_t cur = 0;
+    while (recv_total < bufferSize) {
+        ssize_t recv_bytes = recv(sock_, &buffer[cur], bufferSize, 0);
+        if (recv_bytes < 0) {
+            throw std::runtime_error(std::string("Error receiving data: ") + strerror(errno));
+        }
+        recv_total += recv_bytes;
+        cur = recv_total;
     }
 
-    buffer.resize(recv_bytes);
+    buffer.resize(recv_total);
     return buffer;
 }
 
