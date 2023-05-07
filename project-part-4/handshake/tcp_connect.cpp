@@ -84,7 +84,7 @@ std::string TcpConnect::ReceiveData(size_t bufferSize) const {
 
     std::string buffer(bufferSize, '\0');
     ssize_t recv_bytes = recv(sock_, &buffer[0], bufferSize, 0);
-    if (recv_bytes <= 0) {
+    if (recv_bytes < 0) {
         throw std::runtime_error(std::string("Error receiving data: ") + strerror(errno));
     }
 
