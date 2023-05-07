@@ -109,6 +109,10 @@ void TcpConnect::SendData(const std::string& data) const {
 }
 
 std::string TcpConnect::ReceiveData(size_t bufferSize) const {
+    if(bufferSize > ((2 << 16) - 1)){
+        throw std::runtime_error("Buffer size will be too large upper");
+    }
+    
     struct pollfd pfd;
     pfd.fd = sock_;
     pfd.events = POLLIN;
