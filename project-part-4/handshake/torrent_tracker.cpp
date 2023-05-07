@@ -57,5 +57,5 @@ void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int 
 
         peers_.emplace_back(std::move(peer));
     }
-    delete root;
+    // delete root;
 }

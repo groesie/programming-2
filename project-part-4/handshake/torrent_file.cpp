@@ -56,7 +56,7 @@ TorrentFile LoadTorrentFile(const std::string& filename) {
     std::string info_hash(reinterpret_cast< char const* >(hbuf), SHA_DIGEST_LENGTH);
     tfile.infoHash = info_hash;
 
-    delete root;
+    // delete root;
 
     return tfile;
 }
