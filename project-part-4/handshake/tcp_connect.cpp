@@ -18,7 +18,7 @@ TcpConnect::~TcpConnect() {
 }
 
 void TcpConnect::EstablishConnection() {
-    sock_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sock_ = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ < 0) {
         throw std::runtime_error(std::string("Error creating socket: ") + strerror(errno));
     }
@@ -57,7 +57,7 @@ void TcpConnect::EstablishConnection() {
 }
 
 void TcpConnect::SendData(const std::string& data) const {
-    ssize_t sent_bytes = send(sock_, data.data(), data.size(), 0);
+    ssize_t sent_bytes = send(sock_, data.c_str(), data.size(), 0);
     if (sent_bytes < 0) {
         throw std::runtime_error(std::string("Error sending data: ") + strerror(errno));
     }
