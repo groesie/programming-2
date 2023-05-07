@@ -76,7 +76,7 @@ PeerConnect::PeerConnect(const Peer& peer, const TorrentFile& tf, std::string se
 
 void PeerConnect::PerformHandshake() {
     socket_.EstablishConnection();
-
+    std::cout << tf_.infoHash << std::endl;
     std::string handshake = char(19) + "BitTorrent protocol" + char(0) + char(0) + char(0) + char(0) + char(0) + char(0) + char(0) + char(0) + tf_.infoHash + selfPeerId_;
 
     socket_.SendData(handshake);
