@@ -25,7 +25,6 @@ void PeerConnect::Run() {
 
 bool PeerConnect::EstablishConnection() {
     try {
-        socket_.EstablishConnection();
         PerformHandshake();
         ReceiveBitfield();
         SendInterested();
@@ -73,13 +72,18 @@ size_t PeerPiecesAvailability::Size() const {
 }
 
 PeerConnect::PeerConnect(const Peer& peer, const TorrentFile& tf, std::string selfPeerId)
-    : tf_(tf), socket_(peer.ip, peer.port, 5s, 10s), selfPeerId_(std::move(selfPeerId)), terminated_(false), choked_(true) {}
+    : tf_(tf), socket_(peer.ip, peer.port, 1s, 1s), selfPeerId_(std::move(selfPeerId)), terminated_(false), choked_(true) { }
 
 void PeerConnect::PerformHandshake() {
+    socket_.EstablishConnection();
+
     std::string handshake = "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" + tf_.infoHash + selfPeerId_;
+
     socket_.SendData(handshake);
     std::string response = socket_.ReceiveData(68);  // размер handshake сообщения
     std::cerr << response << std::endl; // debug
+    std::cerr << "cerr " + handshake << std::endl;
+    std::cout << "cout " + handshake << std::endl;
     if (response.substr(0, 28) != "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" ||
         response.substr(28, 20) != tf_.infoHash) {
         throw std::runtime_error("Invalid handshake response");
