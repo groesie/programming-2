@@ -12,8 +12,6 @@
 
 namespace Bencode {
     struct TorElement {
-        TorElement *parent;
-        std::vector<TorElement*> childs;
         std::variant<
             std::string,
             std::unordered_map<std::string, TorElement*>,
