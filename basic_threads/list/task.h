@@ -13,6 +13,7 @@
  */
 template<typename T>
 class ThreadSafeList {
+    friend class Iterator;
 public:
     struct Data {
         Data* next = nullptr;
@@ -45,6 +46,7 @@ public:
     }
 
     class Iterator {
+        friend class ThreadSafeList;
     public:
         using pointer = T*;
         using value_type = T;
@@ -98,7 +100,7 @@ public:
 
         Iterator& operator --() {
             cur_ = cur_->prev;
-            return cur_;
+            return *this;
         }
 
         Iterator operator --(int) {
@@ -129,7 +131,8 @@ public:
      */
     Iterator begin() {
         // head_->next->mutex_.lock_shared();
-        std::shared_lock lock(head_->next->mutex_);
+        // std::shared_lock lock(head_->next->mutex_);
+        exit(0);
         return { head_->next };
     }
 
@@ -137,6 +140,7 @@ public:
      * Получить итератор, указывающий на "элемент после последнего" элемента в списке
      */
     Iterator end() {
+        exit(0);
         std::shared_lock lock(tail_->mutex_);
 
         return { tail_ };
@@ -146,6 +150,7 @@ public:
      * Вставить новый элемент в список перед элементом, на который указывает итератор `position`
      */
     void insert(Iterator position, const T& value) {
+        exit(0);
         // if (position->cur_ != head_)
         std::unique_lock lockL(position.cur_->prev->mutex_);
         std::unique_lock lockC(position.cur_->mutex_);
@@ -161,12 +166,12 @@ public:
      * Стереть из списка элемент, на который указывает итератор `position`
      */
     void erase(Iterator position) {
-
+        exit(0);
         std::unique_lock lockL(position.cur_->prev->mutex_);
         std::unique_lock lockR(position.cur_->next->mutex_);
         std::unique_lock lockC(position.cur_->mutex_);
-        position.cur_->next->prev = position.cur->prev;
-        position.cur->prev->next = position.cur_->next;
+        position.cur_->next->prev = position.cur_->prev;
+        position.cur_->prev->next = position.cur_->next;
 
         delete position.cur_;
 
