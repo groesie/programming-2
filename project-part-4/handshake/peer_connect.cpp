@@ -76,14 +76,11 @@ PeerConnect::PeerConnect(const Peer& peer, const TorrentFile& tf, std::string se
 
 void PeerConnect::PerformHandshake() {
     socket_.EstablishConnection();
-    // std::cout << tf_.infoHash << std::endl;
-    std::string handshake = char(19) + "BitTorrent protocol" + char(0) + char(0) + char(0) + char(0) + char(0) + char(0) + char(0) + char(0) + tf_.infoHash + selfPeerId_;
+    std::string handshake = "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" + tf_.infoHash + selfPeerId_;
 
     socket_.SendData(handshake);
     socket_.EstablishConnection();
     std::string response = socket_.ReceiveData(68);  // размер handshake сообщения
-    
-    std::cout << response.size() << std::endl; // debug
     
     if (response.substr(0, 28) != "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" ||
         response.substr(28, 20) != tf_.infoHash) {

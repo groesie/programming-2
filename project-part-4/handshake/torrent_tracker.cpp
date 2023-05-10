@@ -1,7 +1,9 @@
 #include "torrent_tracker.h"
 #include "bencode.h"
 #include "byte_tools.h"
+
 #include <cpr/cpr.h>
+#include <memory>
 
 const std::vector<Peer> &TorrentTracker::GetPeers() const {
     return peers_;
@@ -30,9 +32,9 @@ void TorrentTracker::UpdatePeers(const TorrentFile& tf, std::string peerId, int 
     std::stringstream tstream(tdata);
     tstream.unsetf(std::ios_base::skipws);
 
-    Bencode::TorElement *root = Bencode::getRoot(tstream);
+    std::shared_ptr<Bencode::TorElement> root = Bencode::getRoot(tstream);
 
-    std::unordered_map<std::string, Bencode::TorElement*> d = std::get<1>(root->value);
+    std::unordered_map<std::string, std::shared_ptr<Bencode::TorElement>> d = std::get<1>(root->value);
     std::stringstream peerstream(std::get<0>(d["peers"]->value));
     peerstream.unsetf(std::ios_base::skipws);
 

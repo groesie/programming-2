@@ -30,14 +30,14 @@ namespace Bencode {
         return res;
     }
 
-    std::vector<TorElement*> readList(std::stringstream &tstream) {
+    std::vector<std::shared_ptr<TorElement>> readList(std::stringstream &tstream) {
 
-        std::vector<TorElement*> res;
+        std::vector<std::shared_ptr<TorElement>> res;
         char cur;
         tstream >> cur;
         while (cur != 'e') {
 
-            TorElement *el = new TorElement;
+            std::shared_ptr<TorElement> el = std::shared_ptr<TorElement>(new TorElement);
             if (cur >= '0' && cur <= '9') {
                 el->value = readArr(tstream);
             } else if (cur == 'd') {
@@ -53,8 +53,8 @@ namespace Bencode {
         return std::move(res);
     }
 
-    std::unordered_map<std::string, TorElement*> readDict(std::stringstream &tstream) {
-        std::unordered_map<std::string, TorElement*> res;
+    std::unordered_map<std::string, std::shared_ptr<TorElement>> readDict(std::stringstream &tstream) {
+        std::unordered_map<std::string, std::shared_ptr<TorElement>> res;
         
         bool procKey = true;
         char cur;
@@ -66,7 +66,7 @@ namespace Bencode {
                 curKey = readArr(tstream);
                 procKey = false;
             } else {
-                TorElement *el = new TorElement;
+                std::shared_ptr<TorElement> el = std::shared_ptr<TorElement>(new TorElement);
                 if (cur >= '0' && cur <= '9') {
                     el->value = readArr(tstream);
                 } else if (cur == 'd') {
@@ -88,9 +88,9 @@ namespace Bencode {
         return std::move(res);
     }
 
-    TorElement *getRoot(std::stringstream &tstream) {
+    std::shared_ptr<TorElement> getRoot(std::stringstream &tstream) {
         char cur;
-        TorElement *root = new TorElement;
+        std::shared_ptr<TorElement> root = std::shared_ptr<TorElement>(new TorElement);
 
         while (tstream >> cur) {
 
