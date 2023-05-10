@@ -7,6 +7,7 @@
 #include <poll.h>
 #include <cstring>
 #include <stdexcept>
+#include <iostream>
 
 TcpConnect::TcpConnect(std::string ip, int port, std::chrono::milliseconds connectTimeout, std::chrono::milliseconds readTimeout)
     : ip_(std::move(ip)), port_(port), connectTimeout_(connectTimeout), readTimeout_(readTimeout), sock_(-1) {}
@@ -101,13 +102,49 @@ std::string TcpConnect::ReceiveData(size_t bufferSize) const {
         if (recv_bytes < 0) {
             throw std::runtime_error(std::string("Error receiving data: ") + strerror(errno));
         }
+        if (recv_bytes > 0)
+            std::cout << buffer << std::endl;
         recv_total += recv_bytes;
         cur = recv_total;
     } while (recv_total < bufferSize);
     
-
+    std::cout << buffer << std::endl;
     buffer.resize(recv_total);
     return buffer;
+    // std::string response;
+
+    // struct pollfd fd{};
+    // fd.fd = sock_;
+    // fd.events = POLLIN;
+
+    // int ret = poll(&fd, 1, int(readTimeout_.count()));
+
+    // if (ret == -1)
+    //     throw std::runtime_error("Cannot read\n");
+    // else if (ret == 0)
+    //     throw std::runtime_error("Timeout for reading\n");
+
+    // if (bufferSize == 0) {
+    //     char sz[4];
+    //     long bytesRead = recv(sock_, sz, bufferSize, 0);
+    //     if (bytesRead < 0)
+    //         throw std::runtime_error("Cannot read\n");
+    //     long size = ntohl(BytesToInt(sz));
+    //     bufferSize = size;
+    // }
+
+    // char buffer[bufferSize];
+    // long bytesRead = 0;
+
+    // std::cout << "Buffer size:" << bufferSize << "\n";
+    // bytesRead = recv(sock_, buffer, 0, 0);
+    // if (bytesRead < 0)
+    //     throw std::runtime_error("Failed to receive data");
+
+    // for (int i = 0; i < bufferSize; i++)
+    //     response += buffer[i];
+    // std::cout << response << std::endl;
+    // return response;
 }
 
 void TcpConnect::CloseConnection() {

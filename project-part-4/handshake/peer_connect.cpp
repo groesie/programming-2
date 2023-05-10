@@ -79,9 +79,9 @@ void PeerConnect::PerformHandshake() {
     std::string handshake = "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" + tf_.infoHash + selfPeerId_;
 
     socket_.SendData(handshake);
-    socket_.EstablishConnection();
+    // socket_.EstablishConnection();
     std::string response = socket_.ReceiveData(68);  // размер handshake сообщения
-    
+    std::cout << response << std::endl;
     if (response.substr(0, 28) != "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" ||
         response.substr(28, 20) != tf_.infoHash) {
         throw std::runtime_error("Invalid handshake response");
