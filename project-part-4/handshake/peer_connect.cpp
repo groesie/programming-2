@@ -99,7 +99,6 @@ void PeerConnect::ReceiveBitfield() {
     else if (message.id != MessageId::BitField)
         throw std::runtime_error("Cannot receive bitfield!");
     piecesAvailability_ = PeerPiecesAvailability(message.payload);
-    
 }
 
 void PeerConnect::SendInterested() {
