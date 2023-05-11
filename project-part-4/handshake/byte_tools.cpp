@@ -12,8 +12,17 @@ int BytesToInt(std::string_view bytes) {
 }
 
 std::string CalculateSHA1(const std::string& msg) {
-    unsigned char hash[SHA_DIGEST_LENGTH];
-    SHA1((unsigned char*)msg.c_str(), msg.length(), hash);
+    // unsigned char hash[SHA_DIGEST_LENGTH];
+    // SHA1((unsigned char*)msg.c_str(), msg.length(), hash);
 
-    return std::string((char*)hash, SHA_DIGEST_LENGTH);
+    // return std::string((char*)hash, SHA_DIGEST_LENGTH);
+    unsigned char buffer[20];
+    SHA1((unsigned char*)msg.c_str(), msg.length(), buffer);
+
+    std::string hash;
+
+    for (auto &c: buffer)
+        hash += char(c);
+
+    return hash;
 }
