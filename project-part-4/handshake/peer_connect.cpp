@@ -72,18 +72,19 @@ size_t PeerPiecesAvailability::Size() const {
 }
 
 PeerConnect::PeerConnect(const Peer& peer, const TorrentFile& tf, std::string selfPeerId)
-    : tf_(tf), socket_(peer.ip, peer.port, 2s, 2s), selfPeerId_(std::move(selfPeerId)), terminated_(false), choked_(true) { }
+    : tf_(tf), socket_(peer.ip, peer.port, 1s, 1s), selfPeerId_(std::move(selfPeerId)), terminated_(false), choked_(true) { }
 
 void PeerConnect::PerformHandshake() {
     socket_.EstablishConnection();
-    std::string handshake = "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" + tf_.infoHash + selfPeerId_;
-
+    std::string handshake;
+    handshake += (char)19;
+    handshake += "BitTorrent protocol";
+    for (int i = 0; i < 8; ++i) handshake += '\0';
+    handshake += tf_.infoHash;
+    handshake += selfPeerId_;
     socket_.SendData(handshake);
-    // socket_.EstablishConnection();
     std::string response = socket_.ReceiveData(68);  // размер handshake сообщения
-    std::cout << response << std::endl;
-    if (response.substr(0, 28) != "\x13" "BitTorrent protocol" "\x00\x00\x00\x00\x00\x00\x00\x00" ||
-        response.substr(28, 20) != tf_.infoHash) {
+    if (response.substr(28, 20) != tf_.infoHash) {
         throw std::runtime_error("Invalid handshake response");
     }
     peerId_ = response.substr(48, 20);
@@ -92,15 +93,14 @@ void PeerConnect::PerformHandshake() {
 
 void PeerConnect::ReceiveBitfield() {
     std::string response = socket_.ReceiveData();
-    int messageLength = BytesToInt(response.substr(0, 4));
-    uint8_t messageId = response[4];
-    if (messageId == 5) {
-        piecesAvailability_ = PeerPiecesAvailability(response.substr(1));
-    } else if (messageId == 1) {
+    Message message = Message::Parse(response);
+    if (message.id == MessageId::BitField)
+        piecesAvailability_ = PeerPiecesAvailability(message.payload);
+    else if (message.id == MessageId::Unchoke)
         choked_ = false;
-    } else {
-        throw std::runtime_error("Expected Bitfield or Unchoke message");
-    }
+    else if (message.id != MessageId::BitField)
+        throw std::runtime_error("Cannot receive bitfield!");
+    
 }
 
 void PeerConnect::SendInterested() {

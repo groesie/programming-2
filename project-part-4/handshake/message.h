@@ -29,21 +29,15 @@ struct Message {
      * Подразумевается, что здесь в качестве `messageString` будет приниматься строка, прочитанная из TCP-сокета
      */
     static Message Parse(const std::string& messageString) {
-        if (messageString.size() < 5) {
+        if (messageString.size() < 2) {
             throw std::invalid_argument("Invalid message string");
         }
 
-        uint32_t messageLength = 
-            (unsigned char)messageString[0] << 24 |
-            (unsigned char)messageString[1] << 16 |
-            (unsigned char)messageString[2] << 8 |
-            (unsigned char)messageString[3];
+        MessageId id = static_cast<MessageId>(messageString[0]);
 
-        MessageId id = static_cast<MessageId>(messageString[4]);
+        std::string payload = messageString.substr(1);
 
-        std::string payload = messageString.substr(5);
-
-        return {id, messageLength, payload};
+        return Init(id, payload);
     }
 
     /*
