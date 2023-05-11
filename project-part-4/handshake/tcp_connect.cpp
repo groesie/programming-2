@@ -85,6 +85,12 @@ std::string TcpConnect::ReceiveData(size_t bufferSize) const {
             throw std::runtime_error(std::string("Error receiving data: ") + strerror(errno));
         }
         bufferSize = ntohl(msg_size);
+        // char sz[4];
+        // long bytesRead = recv(sock_, &sz, 4, MSG_DONTWAIT);
+        // if (bytesRead < 0)
+        //     throw std::runtime_error("Cannot read\n");
+        // long size = BytesToInt(sz);
+        // bufferSize = size;
     }
 
     std::string buffer(bufferSize, '\0');
