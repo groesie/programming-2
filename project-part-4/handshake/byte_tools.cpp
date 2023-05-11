@@ -3,12 +3,16 @@
 #include <openssl/sha.h>
 
 int BytesToInt(std::string_view bytes) {
-    int res = 0;
-    for (int i = 0; i < bytes.size(); ++i) {
-        res <<= 8;
-        res += (int)(unsigned char)bytes[i];
-    }
-    return res;
+    // int res = 0;
+    // for (int i = 0; i < bytes.size(); ++i) {
+    //     res <<= 8;
+    //     res += (int)(unsigned char)bytes[i];
+    // }
+    // return res;
+    return static_cast<int>(static_cast<unsigned char>(bytes[0]) << 24 |
+                            static_cast<unsigned char>(bytes[1]) << 16 |
+                            static_cast<unsigned char>(bytes[2]) << 8 |
+                            static_cast<unsigned char>(bytes[3]));
 }
 
 std::string CalculateSHA1(const std::string& msg) {
