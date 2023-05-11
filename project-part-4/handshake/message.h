@@ -29,8 +29,8 @@ struct Message {
      * Подразумевается, что здесь в качестве `messageString` будет приниматься строка, прочитанная из TCP-сокета
      */
     static Message Parse(const std::string& messageString) {
-        if (messageString.size() < 2) {
-            throw std::invalid_argument("Invalid message string");
+        if (messageString.size() == 0) {
+            return Init(MessageId::KeepAlive, "");
         }
 
         MessageId id = static_cast<MessageId>(messageString[0]);
