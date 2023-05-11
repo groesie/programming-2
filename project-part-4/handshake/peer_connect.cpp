@@ -94,12 +94,11 @@ void PeerConnect::PerformHandshake() {
 void PeerConnect::ReceiveBitfield() {
     std::string response = socket_.ReceiveData();
     Message message = Message::Parse(response);
-    if (message.id == MessageId::BitField)
-        piecesAvailability_ = PeerPiecesAvailability(message.payload);
-    else if (message.id == MessageId::Unchoke)
+    if (message.id == MessageId::Unchoke)
         choked_ = false;
     else if (message.id != MessageId::BitField)
         throw std::runtime_error("Cannot receive bitfield!");
+    piecesAvailability_ = PeerPiecesAvailability(message.payload);
     
 }
 
