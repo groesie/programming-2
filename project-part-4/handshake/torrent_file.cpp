@@ -1,5 +1,7 @@
 #include "torrent_file.h"
 #include "bencode.h"
+#include "byte_tools.h"
+
 #include <vector>
 #include <openssl/sha.h>
 #include <fstream>
@@ -41,21 +43,21 @@ TorrentFile LoadTorrentFile(const std::string& filename) {
 
     tfile.pieceHashes = pieceHashes;
     size_t info_len = Bencode::info_end - Bencode::info_start + 1;
-    char info[info_len];
+    std::string info;
+    info.resize(info_len);
+
     unsigned char hbuf[SHA_DIGEST_LENGTH];
 
     tifstream.open(filename);
    
     tifstream.unsetf(std::ios_base::skipws);
     tifstream.seekg(Bencode::info_start - 1);
-    tifstream.read(info, info_len);
+    tifstream.read(&info[0], info_len);
 
     tifstream.close();
 
-    SHA1(reinterpret_cast<unsigned char const* >(info), info_len, hbuf);
-
-    std::string info_hash(reinterpret_cast< char const* >(hbuf), SHA_DIGEST_LENGTH);
-    tfile.infoHash = info_hash;
+    // std::string info_hash(reinterpret_cast< char const* >(hbuf), SHA_DIGEST_LENGTH);
+    tfile.infoHash = CalculateSHA1(info);
 
     // delete root;
 
