@@ -35,13 +35,15 @@ TorrentFile LoadTorrentFile(const std::string& filename) {
     tfile.length = std::get<3>(d_info["length"]->value);
     std::vector<std::string> pieceHashes;
     std::string pieces = std::get<0>(d_info["pieces"]->value);
-    tfile.pieceLength = std::get<3>(d_info["piece length"]->value);
+    // tfile.pieceLength = std::get<3>(d_info["piece length"]->value);
+    tfile.pieceLength = 20;
     int pieceI;
     for (pieceI = 0; pieceI < pieces.size(); pieceI += tfile.pieceLength) {
         tfile.pieceHashes.emplace_back(pieces.substr(pieceI, tfile.pieceLength));
     }
     if (pieces.size() % tfile.pieceLength != 0)
         tfile.pieceHashes.emplace_back(pieces.substr(pieceI - tfile.pieceLength));
+        
     size_t info_len = Bencode::info_end - Bencode::info_start + 1;
     std::string info;
     info.resize(info_len);
