@@ -54,7 +54,7 @@ TorrentFile LoadTorrentFile(const std::string& filename) {
         i -= 20;
     }
 
-    tfile.pieceHashes = pieceHashes;
+    // tfile.pieceHashes = pieceHashes;
     size_t info_len = Bencode::info_end - Bencode::info_start + 1;
     std::string info;
     info.resize(info_len);
