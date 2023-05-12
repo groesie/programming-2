@@ -7,7 +7,7 @@
 #include <fstream>
 #include <variant>
 #include <sstream>
-
+#include <algorithm>
 #include <string>
 
 
@@ -39,10 +39,10 @@ TorrentFile LoadTorrentFile(const std::string& filename) {
     tfile.pieceLength = 20;
     int pieceI;
     for (pieceI = 0; pieceI < pieces.size(); pieceI += tfile.pieceLength) {
-        tfile.pieceHashes.emplace_back(pieces.substr(pieceI, tfile.pieceLength));
+        tfile.pieceHashes.emplace_back(pieces.substr(pieceI, std::min(20UL, pieces.size() - pieceI)));
     }
-    if (pieces.size() % tfile.pieceLength != 0)
-        tfile.pieceHashes.emplace_back(pieces.substr(pieceI - tfile.pieceLength));
+    // if (pieces.size() % tfile.pieceLength != 0)
+    //     tfile.pieceHashes.emplace_back(pieces.substr(pieceI - tfile.pieceLength));
         
     size_t info_len = Bencode::info_end - Bencode::info_start + 1;
     std::string info;
