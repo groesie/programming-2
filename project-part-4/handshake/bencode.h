@@ -7,57 +7,47 @@
 #include <list>
 #include <map>
 #include <sstream>
-#include <cassert>
-#include <charconv>
-#include <iostream>
+#include <unordered_map>
+#include <algorithm>
+#include <memory>
 
 namespace Bencode {
-
-/*
- * В это пространство имен рекомендуется вынести функции для работы с данными в формате bencode.
- * Этот формат используется в .torrent файлах и в протоколе общения с трекером
- */
-    struct element;
-
-    using number = long long;
-    using string = std::string;
-    using list = std::list<element>;
-    using dictionary = std::map<string, element>;
-
-    struct element {
-        std::variant<number, string, list, dictionary> value;
+    struct TorElement {
+        std::variant<
+            std::string,
+            std::unordered_map<std::string, std::shared_ptr<TorElement>>,
+            std::vector<std::shared_ptr<TorElement>>,
+            uint64_t
+        > value;
+        // ~TorElement() {
+        //     if (std::holds_alternative<std::vector<TorElement*>>(value)) {
+        //         for (auto i: std::get<std::vector<TorElement*>>(value)) {
+        //             delete i;
+        //         }
+        //     } else if (std::holds_alternative<std::unordered_map<std::string, TorElement*>>(value)) {
+        //         std::unordered_map<std::string, TorElement*> my_map = std::get<std::unordered_map<std::string, TorElement*>>(value);
+        //         std::for_each (my_map.begin(), my_map.end(), [](auto item) -> void
+        //         {
+        //         delete item.second;
+        //         });
+        //     }
+        // }
     };
+    using TorElemPtr = std::shared_ptr<Bencode::TorElement>;
+    using Dict = std::unordered_map<std::string, std::shared_ptr<TorElement>>;
+    using Array = std::string;
+    using Int = uint64_t;
+    using List = std::vector<std::shared_ptr<TorElement>>;
 
-    class Decoder {
-    public:
-        explicit Decoder(const std::string& torrent_string);
+    extern size_t info_start, info_end;
 
-        element DecodeElement();
-    private:
-        number DecodeNumber();
+    Dict readDict(std::stringstream &tstream);
 
-        string DecodeString();
+    Array readArr(std::stringstream &tstream);
 
-        list DecodeList();
+    Int readInt(std::stringstream &tstream);
 
-        dictionary DecodeDictionary();
+    List readList(std::stringstream &tstream);
 
-        std::string_view torrent_string;
-    };
-
-    class Encoder {
-    public:
-        explicit Encoder();
-
-        std::string EncodeElement(element& element_);
-    private:
-        static std::string EncodeNumber(number& number_);
-
-        static std::string EncodeString(const string& string_);
-
-        std::string EncodeList(list& list_);
-
-        std::string EncodeDictionary(dictionary& dictionary_);
-    };
-
+    TorElemPtr getRoot(std::stringstream &tstream);
 }

@@ -1,7 +1,10 @@
 #pragma once
 
+#include "bencode.h"
+
 #include <string>
 #include <vector>
+#include <memory>
 
 struct TorrentFile {
     std::string announce;
@@ -14,3 +17,5 @@ struct TorrentFile {
 };
 
 TorrentFile LoadTorrentFile(const std::string& filename);
+
+using TorElemPtr = std::shared_ptr<Bencode::TorElement>;
