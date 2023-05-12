@@ -37,7 +37,5 @@ add_executable(
         message.h
         byte_tools.h
         byte_tools.cpp
-        bencoded.h
-        bencoded.cpp
 )
 target_link_libraries(${PROJECT_NAME} PUBLIC ${OPENSSL_LIBRARIES} cpr::cpr)
