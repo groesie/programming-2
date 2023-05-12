@@ -35,7 +35,7 @@ TorrentFile LoadTorrentFile(const std::string& filename) {
     tfile.length = std::get<3>(d_info["length"]->value);
     std::vector<std::string> pieceHashes;
     std::string pieces = std::get<0>(d_info["pieces"]->value);
-    // tfile.pieceLength = std::get<3>(d_info["piece length"]->value);
+    tfile.pieceLength = std::get<3>(d_info["piece length"]->value);
     // tfile.pieceLength = 20;
     // size_t pieceI;
     // for (pieceI = 0; pieceI < pieces.size(); pieceI += tfile.pieceLength) {
