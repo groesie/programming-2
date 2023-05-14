@@ -36,9 +36,8 @@ TorrentFile LoadTorrentFile(const std::string& filename) {
     std::vector<std::string> pieceHashes;
     std::string pieces = std::get<0>(d_info["pieces"]->value);
     tfile.pieceLength = std::get<3>(d_info["piece length"]->value);
-    // tfile.pieceLength = 20;
-    size_t pieceI;
-    for (pieceI = 0; pieceI < pieces.size(); pieceI += 20) {
+
+    for (size_t pieceI = 0; pieceI < pieces.size(); pieceI += 20) {
         tfile.pieceHashes.emplace_back(pieces.substr(pieceI, std::min(20UL, pieces.size() - pieceI)));
     }
         
