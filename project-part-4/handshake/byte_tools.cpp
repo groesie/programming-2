@@ -17,3 +17,12 @@ std::string CalculateSHA1(const std::string& msg) {
 
     return std::string((char*)hash, SHA_DIGEST_LENGTH);
 }
+
+std::string IntToBytesBigEndian(uint32_t value) {
+    std::string result(4, '\0');
+    result[0] = (value >> 24) & 0xFF;
+    result[1] = (value >> 16) & 0xFF;
+    result[2] = (value >> 8) & 0xFF;
+    result[3] = value & 0xFF;
+    return result;
+}
