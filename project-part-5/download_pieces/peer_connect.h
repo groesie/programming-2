@@ -4,6 +4,7 @@
 #include "peer.h"
 #include "torrent_file.h"
 #include "piece_storage.h"
+#include "message.h"
 
 /*
  * Структура, хранящая информацию о доступности частей скачиваемого файла у данного пира
@@ -51,6 +52,11 @@ public:
     void Run();
 
     void Terminate();
+
+    // void HandleHaveMessage(const Message& message);
+
+    void HandlePieceMessage(const Message& message);
+
 private:
     const TorrentFile& tf_;
     TcpConnect socket_;  // tcp-соединение с пиром

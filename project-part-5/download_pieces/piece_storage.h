@@ -40,4 +40,6 @@ protected:
     std::queue<PiecePtr> remainPieces_;  // очередь частей файла, которые осталось скачать
 
     virtual void SavePieceToDisk(PiecePtr piece);
+private:
+    mutable std::mutex mutex_;
 };

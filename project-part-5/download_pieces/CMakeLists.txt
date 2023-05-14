@@ -21,6 +21,8 @@ FetchContent_MakeAvailable(cpr)
 add_executable(
         ${PROJECT_NAME}
         main.cpp
+        bencode.cpp
+        bencode.h
         check_peers.h
         peer.h
         torrent_file.h
@@ -31,8 +33,6 @@ add_executable(
         torrent_tracker.cpp
         torrent_tracker.h
         torrent_file.cpp
-        bencode.cpp
-        bencode.h
         message.cpp
         message.h
         byte_tools.h
