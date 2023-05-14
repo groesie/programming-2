@@ -2,8 +2,8 @@
 
 namespace Bencode {
     size_t info_start = -1, info_end = -1;
-    Bencode::Array readArr(std::stringstream &tstream) {
-        Bencode::Array res;
+    Array readArr(std::stringstream &tstream) {
+        Array res;
         tstream.seekg(-1, std::ios::cur);
         char cur;
         tstream >> cur;
@@ -19,7 +19,7 @@ namespace Bencode {
         return std::move(res);
     }
 
-    Bencode::Int readInt(std::stringstream &tstream) {
+    Int readInt(std::stringstream &tstream) {
         char cur;
         tstream >> cur;
         uint64_t res = 0;
