@@ -76,8 +76,8 @@ std::string TcpConnect::ReceiveData(size_t bufferSize) const {
 
     int poll_res = poll(&pfd, 1, readTimeout_.count());
     if (poll_res <= 0) {
-        throw std::runtime_error("Read timeout after polling");
         exit(0);
+        throw std::runtime_error("Read timeout after polling");
     }
 
     if (bufferSize == 0) {
