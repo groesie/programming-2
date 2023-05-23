@@ -1,7 +1,10 @@
 #pragma once
 
+#include "bencode.h"
+
 #include <string>
 #include <vector>
+#include <memory>
 
 struct TorrentFile {
     std::string announce;

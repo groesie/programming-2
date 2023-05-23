@@ -13,9 +13,8 @@ int BytesToInt(std::string_view bytes);
  */
 std::string CalculateSHA1(const std::string& msg);
 
-/*
- * Представить массив байтов в виде строки, содержащей только символы, соответствующие цифрам в шестнадцатеричном исчислении.
- * Конкретный формат выходной строки не важен. Важно то, чтобы выходная строка не содержала символов, которые нельзя
- * было бы представить в кодировке utf-8. Данная функция будет использована для вывода SHA1 хеш-суммы в лог.
- */
+std::string IntToBytesBigEndian(uint32_t value);
+
+std::string IntToBytesLittleEndian(uint32_t value);
+
 std::string HexEncode(const std::string& input);
