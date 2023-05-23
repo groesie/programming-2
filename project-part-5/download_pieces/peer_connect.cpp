@@ -107,6 +107,7 @@ void PeerConnect::SendInterested() {
 void PeerConnect::MainLoop() {
     while (!terminated_) {
         try {
+            exit(0);
             std::string response = socket_.ReceiveData();
             Message message = Message::Parse(response);
 
