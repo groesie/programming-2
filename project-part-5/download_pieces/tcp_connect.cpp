@@ -227,6 +227,7 @@ std::string TcpConnect::ReceiveData(size_t bufferSize) const {
 
     if (bufferSize == 0) {
         char sz[4];
+        std::cout << "debug tcp" << std::endl;
         long bytesRead = recv(sock_, &sz, 4, MSG_DONTWAIT);
         if (bytesRead < 0)
             throw std::runtime_error("Cannot read\n");
