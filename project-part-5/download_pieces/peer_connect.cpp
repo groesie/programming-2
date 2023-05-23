@@ -184,6 +184,7 @@ void PeerConnect::RequestPiece() {
     }
 }
 
+
 // void PeerConnect::HandlePieceMessage(const Message &message) {
 //     pieceInProgress_->AddBlock(message.payload);
 //     if (pieceInProgress_->IsComplete()) {
