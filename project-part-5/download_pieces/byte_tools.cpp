@@ -1,6 +1,7 @@
 #include "byte_tools.h"
 
 #include <openssl/sha.h>
+#include <algorithm>
 
 int BytesToInt(std::string_view bytes) {
     // int res = 0;
