@@ -6,8 +6,6 @@
 #include <utility>
 #include <cassert>
 #include <stdexcept>
-#include <arpa/inet.h>
-#include <cstring>
 
 using namespace std::chrono_literals;
 
@@ -104,6 +102,44 @@ void PeerConnect::SendInterested() {
     socket_.SendData(data);
 }
 
+// void PeerConnect::MainLoop() {
+//     while (!terminated_) {
+//         std::string response = socket_.ReceiveData();
+//         Message message = Message::Parse(response);
+//         if (message.id == MessageId::Unchoke) {
+//             choked_ = false;
+//         } else if (message.id == MessageId::Have) {
+//             HandleHaveMessage(message);
+//         } else if (message.id == MessageId::Piece) {
+//             HandlePieceMessage(message);
+//         }
+//     }
+// }
+
+// void PeerConnect::HandleHaveMessage(const Message& message) {
+//     size_t pieceIndex = BytesToInt(message.payload);
+//     piecesAvailability_.SetPieceAvailability(pieceIndex);
+// }
+
+// void PeerConnect::HandlePieceMessage(const Message& message) {
+//     // Получение индекса и смещения части
+//     size_t pieceIndex = BytesToInt(message.payload.substr(0, 4));
+//     size_t offset = BytesToInt(message.payload.substr(4, 4));
+
+//     // Получение данных части
+//     std::string pieceData = message.payload.substr(8);
+
+//     // Сохранение полученной части
+//     PiecePtr piece = std::make_shared<Piece>(pieceIndex, tf_.pieceLength);
+//     piece->SaveBlock(offset, pieceData);
+
+//     // Проверка наличия всех блоков в части
+//     if (piece->AllBlocksRetrieved()) {
+//         pieceStorage_.PieceProcessed(piece);
+//     }
+// }
+
+
 void PeerConnect::MainLoop() {
     while (!terminated_) {
         try {
@@ -112,37 +148,17 @@ void PeerConnect::MainLoop() {
 
             switch (message.id) {
                 case MessageId::Have:
-                {
-                    size_t pieceIndex = BytesToInt(message.payload);
-                    piecesAvailability_.SetPieceAvailability(pieceIndex);
+                    HandleHaveMessage(message);
                     break;
-                }
                 case MessageId::Piece:
-                {
-                    size_t index = BytesToInt(message.payload.substr(0, 4));
-                    size_t offset = BytesToInt(message.payload.substr(4, 4));
-
-                    std::string pieceData = message.payload.substr(8);
-
-                    pieceInProgress_ = std::make_shared<Piece>(index, tf_.pieceLength, tf_.pieceHashes[index]);
-                    pieceInProgress_->SaveBlock(offset, pieceData);
-
-                    // Проверка наличия всех блоков в части
-                    if (pieceInProgress_->AllBlocksRetrieved()) {
-                        pieceStorage_.PieceProcessed(pieceInProgress_);
-                    }
+                    HandlePieceMessage(message);
                     break;
-                }
                 case MessageId::Choke:
-                {
-                    choked_ = true;
+                    HandleChokeMessage();
                     break;
-                }
                 case MessageId::Unchoke:
-                {
-                    choked_ = false;
+                    HandleUnchokeMessage();
                     break;
-                }
                 default:
                     break;
             }
@@ -157,31 +173,9 @@ void PeerConnect::MainLoop() {
         }
     }
 }
-
-
-void PeerConnect::RequestPiece() {
-    if (!pieceInProgress_) {
-        pieceInProgress_ = pieceStorage_.GetNextPieceToDownload();
-    }
-
-    if (pieceInProgress_) {
-        Block* block = pieceInProgress_->FirstMissingBlock();
-        block->status = Block::Status::Pending;
-
-        char buff[12];
-        uint32_t index = htonl(block->piece);
-        uint32_t offset = htonl(block->offset);
-        uint32_t length = htonl(block->length);
-        std::memcpy(buff, &index, sizeof(int));
-        std::memcpy(buff + 4, &offset, sizeof(int));
-        std::memcpy(buff + 8, &length, sizeof(int));
-        std::string requestString;
-        requestString.reserve(12);
-        for (int i = 0; i < 12; i++)
-            requestString += (char) buff[i];
-        socket_.SendData(requestString);
-        pendingBlock_ = true;
-    }
+void PeerConnect::HandleHaveMessage(const Message &message) {
+    size_t pieceIndex = ByteTools::ToInt(message.payload);
+    piecesAvailability_.SetPieceAvailability(pieceIndex);
 }
 
 // void PeerConnect::HandlePieceMessage(const Message &message) {
@@ -193,45 +187,99 @@ void PeerConnect::RequestPiece() {
 //     pendingBlock_ = false;
 // }
 
+void PeerConnect::HandleChokeMessage() {
+    choked_ = true;
+}
 
-// void Peer::HandlePieceMessage(const Message& message) {
-//     auto pieceIndex = ByteTools::NetworkToHost32(
-//         ByteTools::ToUInt32(message.payload.substr(0, 4)));
+void PeerConnect::HandleUnchokeMessage() {
+    choked_ = false;
+}
+void Peer::HandlePieceMessage(const Message& message) {
+    auto pieceIndex = ByteTools::NetworkToHost32(
+        ByteTools::ToUInt32(message.payload.substr(0, 4)));
 
-//     auto blockOffset = ByteTools::NetworkToHost32(
-//         ByteTools::ToUInt32(message.payload.substr(4, 4)));
+    auto blockOffset = ByteTools::NetworkToHost32(
+        ByteTools::ToUInt32(message.payload.substr(4, 4)));
 
-//     auto blockData = message.payload.substr(8);
+    auto blockData = message.payload.substr(8);
 
-//     auto piecePtr = fileManager.GetPiece(pieceIndex);
+    auto piecePtr = fileManager.GetPiece(pieceIndex);
 
+    if (piecePtr) {
+        piecePtr->SaveBlock(blockOffset, blockData);
 
-//     if (piecePtr) {
-//         piecePtr->SaveBlock(blockOffset, blockData);
+        if (piecePtr->AllBlocksRetrieved()) {
+            if (piecePtr->HashMatches()) {
+                fileManager.WritePieceToFile(piecePtr->GetIndex(),
+                                              piecePtr->GetData());
+                torrentManager.UpdateStatus(pieceIndex, TorrentStatus::Completed);
+            } else {
+                piecePtr->Reset();
+                torrentManager.UpdateStatus(pieceIndex, TorrentStatus::Incomplete);
+            }
+        }
 
-//         if (piecePtr->AllBlocksRetrieved()) {
-//             if (piecePtr->HashMatches()) {
-//                 fileManager.WritePieceToFile(piecePtr->GetIndex(),
-//                                               piecePtr->GetData());
-//                 torrentManager.UpdateStatus(pieceIndex, TorrentStatus::Completed);
-//             } else {
-//                 piecePtr->Reset();
-//                 torrentManager.UpdateStatus(pieceIndex, TorrentStatus::Incomplete);
-//             }
-//         }
+        // Request next block if there are still blocks to download
+        if (!piecePtr->AllBlocksRetrieved()) {
+            RequestPiece(pieceIndex);
+        }
+    }
+}
 
-//         // Request next block if there are still blocks to download
-//         if (!piecePtr->AllBlocksRetrieved()) {
-//             RequestPiece(pieceIndex);
-//         }
+void Peer::RequestPiece(size_t pieceIndex) {
+    auto piecePtr = fileManager.GetPiece(pieceIndex);
+
+    if (piecePtr) {
+        Block* missingBlock = piecePtr->FirstMissingBlock();
+
+        if (missingBlock) {
+            missingBlock->status = Block::Status::Pending;
+
+            std::string payload;
+            payload.reserve(12);
+            payload += ByteTools::FromUInt32(ByteTools::HostToNetwork32(pieceIndex));
+            payload += ByteTools::FromUInt32(ByteTools::HostToNetwork32(missingBlock->offset));
+            payload += ByteTools::FromUInt32(ByteTools::HostToNetwork32(missingBlock->length));
+
+            Message requestMessage = Message::Init(MessageId::Request, payload);
+            SendMessage(requestMessage);
+        }
+    }
+}
+
+// void PeerConnect::RequestPiece() {
+//     if (!pieceInProgress_) {
+//         pieceInProgress_ = pieceStorage_.GetNextPieceToDownload();
+//     }
+
+//     if (pieceInProgress_) {
+//         size_t offset = pieceInProgress_->GetNextBlockOffset();
+//         size_t blockLength = std::min(static_cast<size_t>(1 << 14), pieceInProgress_->GetSize() - offset);
+//         Message requestMessage = Message::CreateRequestMessage(pieceInProgress_->GetIndex(), offset, blockLength);
+//         socket_.SendData(requestMessage.ToString());
+//         pendingBlock_ = true;
 //     }
 // }
 
 
-
-
 // The HandlePieceMessage function now works with the Piece class and its methods, and the RequestPiece function has been adjusted accordingly. The HandlePieceMessage function saves the received block data to the corresponding piece and checks if all blocks have been retrieved. If so, it verifies the hash and writes the data to the file if the hash matches. The RequestPiece function requests the next missing block of the specified piece from the peer.
+// void PeerConnect::HandlePieceMessage(const Message& message) {
+//     // Получение индекса и смещения части
+//     size_t pieceIndex = BytesToInt(message.payload.substr(0, 4));
+//     size_t offset = BytesToInt(message.payload.substr(4, 4));
 
+//     // Получение данных части
+//     std::string pieceData = message.payload.substr(8);
+
+//     // Сохранение полученной части
+//     PiecePtr piece = std::make_shared<Piece>(pieceIndex, tf_.pieceLength, tf_.pieceHashes[pieceIndex]);
+//     piece->SaveBlock(offset, pieceData);
+
+//     // Проверка наличия всех блоков в части
+//     if (piece->AllBlocksRetrieved()) {
+//         pieceStorage_.PieceProcessed(piece);
+//     }
+// }
 
 // void PeerConnect::RequestPiece() {
 //     if (!choked_) {

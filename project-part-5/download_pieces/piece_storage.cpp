@@ -1,48 +1,42 @@
-#include <iostream>
 #include "piece_storage.h"
 
+#include <iostream>
+#include <stdexcept>
+
 PieceStorage::PieceStorage(const TorrentFile& tf) {
-    size_t num_pieces = tf.pieceHashes.size();
+    size_t num_pieces = tf.length / tf.pieceLength;
+    size_t last_piece_length = tf.length % tf.pieceLength;
+
     for (size_t i = 0; i < num_pieces; ++i) {
-        size_t piece_length = (i == num_pieces - 1) ? tf.length - i * tf.pieceLength : tf.pieceLength;
-        PiecePtr piece = std::make_shared<Piece>(i, piece_length, tf.pieceHashes[i]);
-        remainPieces_.push(piece);
+        remainPieces_.push(std::make_shared<Piece>(i, tf.pieceLength, tf.pieceHashes[i]));
+    }
+    if (last_piece_length > 0) {
+        remainPieces_.push(std::make_shared<Piece>(num_pieces, last_piece_length, tf.pieceHashes[num_pieces]));
     }
 }
 
 PiecePtr PieceStorage::GetNextPieceToDownload() {
-    std::unique_lock<std::mutex> lock(mutex_);
     if (remainPieces_.empty()) {
-        return nullptr;
+        throw std::out_of_range("No more pieces to download");
     }
-    PiecePtr piece = remainPieces_.front();
+    auto piece = remainPieces_.front();
     remainPieces_.pop();
     return piece;
 }
 
 void PieceStorage::PieceProcessed(const PiecePtr& piece) {
-    std::unique_lock<std::mutex> lock(mutex_);
-    if (piece->HashMatches()) {
-        SavePieceToDisk(piece);
-        while (!remainPieces_.empty()) {
-            remainPieces_.pop();
-        }
-    } else {
-        piece->Reset();
-        remainPieces_.push(piece);
+    while (!remainPieces_.empty()) {
+        remainPieces_.pop();
     }
 }
 
 bool PieceStorage::QueueIsEmpty() const {
-    std::unique_lock<std::mutex> lock(mutex_);
     return remainPieces_.empty();
 }
 
 size_t PieceStorage::TotalPiecesCount() const {
-    std::unique_lock<std::mutex> lock(mutex_);
     return remainPieces_.size();
 }
-
 
 void PieceStorage::SavePieceToDisk(PiecePtr piece) {
     // Эта функция будет переопределена при запуске вашего решения в проверяющей системе

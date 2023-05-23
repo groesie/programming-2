@@ -80,10 +80,6 @@ public:
      */
     void Reset();
 
-    size_t GetDownloadedSize() const;
-
-    size_t GetRemainingSize() const;
-
 private:
     const size_t index_, length_;
     const std::string hash_;

@@ -1,8 +1,6 @@
 #include "byte_tools.h"
 
-#include <vector>
 #include <openssl/sha.h>
-
 
 int BytesToInt(std::string_view bytes) {
     int res = 0;
@@ -19,7 +17,6 @@ std::string CalculateSHA1(const std::string& msg) {
 
     return std::string((char*)hash, SHA_DIGEST_LENGTH);
 }
-
 
 std::string IntToBytesBigEndian(uint32_t value) {
     std::string result(4, '\0');
