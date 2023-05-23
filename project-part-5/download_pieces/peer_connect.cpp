@@ -107,7 +107,6 @@ void PeerConnect::SendInterested() {
 void PeerConnect::MainLoop() {
     while (!terminated_) {
         try {
-            exit(0);
             std::string response = socket_.ReceiveData();
             Message message = Message::Parse(response);
 
@@ -166,111 +165,5 @@ void PeerConnect::MainLoop() {
 
 
 void PeerConnect::RequestPiece() {
-    if (!pieceInProgress_) {
-        pieceInProgress_ = pieceStorage_.GetNextPieceToDownload();
-    }
-    bool allBlocksRetrieved;
-    while (pieceInProgress_ and ((allBlocksRetrieved = pieceInProgress_->AllBlocksRetrieved()) or
-                                 !piecesAvailability_.IsPieceAvailable(pieceInProgress_->GetIndex()))) {
-        if (allBlocksRetrieved)
-            pieceStorage_.PieceProcessed(pieceInProgress_);
-        pieceInProgress_ = pieceStorage_.GetNextPieceToDownload();
-    }
-    if (!pieceInProgress_) {
-        Terminate();
-        return;
-    }
-    auto block = pieceInProgress_->FirstMissingBlock();
-
-    std::string msgPayload;
-    msgPayload += (block->piece, false);
-    msgPayload += IntToBytes(block->offset, false);
-    msgPayload += IntToBytes(block->length, false);
-    socket_.SendData(Message::Init(MessageId::Request, msgPayload).ToString());
-    pendingBlock_ = true;
-
-    // if (pieceInProgress_) {
-    //     Block* block = pieceInProgress_->FirstMissingBlock();
-    //     block->status = Block::Status::Pending;
-
-    //     char buff[12];
-    //     uint32_t index = htonl(block->piece);
-    //     uint32_t offset = htonl(block->offset);
-    //     uint32_t length = htonl(block->length);
-    //     std::memcpy(buff, &index, sizeof(int));
-    //     std::memcpy(buff + 4, &offset, sizeof(int));
-    //     std::memcpy(buff + 8, &length, sizeof(int));
-    //     std::string requestString;
-    //     requestString.reserve(12);
-    //     for (int i = 0; i < 12; i++)
-    //         requestString += (char) buff[i];
-    //     socket_.SendData(requestString);
-    //     pendingBlock_ = true;
-    // }
+    
 }
-
-
-// void PeerConnect::HandlePieceMessage(const Message &message) {
-//     pieceInProgress_->AddBlock(message.payload);
-//     if (pieceInProgress_->IsComplete()) {
-//         pieceStorage_.PieceProcessed(pieceInProgress_);
-//         pieceInProgress_.reset();
-//     }
-//     pendingBlock_ = false;
-// }
-
-
-// void Peer::HandlePieceMessage(const Message& message) {
-//     auto pieceIndex = ByteTools::NetworkToHost32(
-//         ByteTools::ToUInt32(message.payload.substr(0, 4)));
-
-//     auto blockOffset = ByteTools::NetworkToHost32(
-//         ByteTools::ToUInt32(message.payload.substr(4, 4)));
-
-//     auto blockData = message.payload.substr(8);
-
-//     auto piecePtr = fileManager.GetPiece(pieceIndex);
-
-
-//     if (piecePtr) {
-//         piecePtr->SaveBlock(blockOffset, blockData);
-
-//         if (piecePtr->AllBlocksRetrieved()) {
-//             if (piecePtr->HashMatches()) {
-//                 fileManager.WritePieceToFile(piecePtr->GetIndex(),
-//                                               piecePtr->GetData());
-//                 torrentManager.UpdateStatus(pieceIndex, TorrentStatus::Completed);
-//             } else {
-//                 piecePtr->Reset();
-//                 torrentManager.UpdateStatus(pieceIndex, TorrentStatus::Incomplete);
-//             }
-//         }
-
-//         // Request next block if there are still blocks to download
-//         if (!piecePtr->AllBlocksRetrieved()) {
-//             RequestPiece(pieceIndex);
-//         }
-//     }
-// }
-
-
-
-
-// The HandlePieceMessage function now works with the Piece class and its methods, and the RequestPiece function has been adjusted accordingly. The HandlePieceMessage function saves the received block data to the corresponding piece and checks if all blocks have been retrieved. If so, it verifies the hash and writes the data to the file if the hash matches. The RequestPiece function requests the next missing block of the specified piece from the peer.
-
-
-// void PeerConnect::RequestPiece() {
-//     if (!choked_) {
-//         PiecePtr piece = pieceStorage_.GetNextPieceToDownload();
-//         if (piece) {
-//             // Формирование запроса
-//             std::string payload = IntToBytesBigEndian(piece->GetIndex()) +
-//                                   IntToBytesBigEndian(piece->GetDownloadedSize()) +
-//                                   IntToBytesBigEndian(piece->GetRemainingSize());
-//             Message requestMessage = Message::Init(MessageId::Request, payload);
-
-//             // Отправка запроса
-//             socket_.SendData(requestMessage.ToString());
-//         }
-//     }
-// }
