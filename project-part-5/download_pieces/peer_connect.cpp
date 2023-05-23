@@ -98,7 +98,7 @@ void PeerConnect::ReceiveBitfield() {
 void PeerConnect::SendInterested() {
     Message ms;
 
-    ms = ms.Init(MessageId::Interested, std::string());
+    ms = ms.Init(MessageId::Interested, "");
     std::string data = ms.ToString();
 
     socket_.SendData(data);
@@ -113,12 +113,14 @@ void PeerConnect::MainLoop() {
             switch (message.id) {
                 case MessageId::Have:
                 {
+                    std::cout << "Have" << std::endl;
                     size_t pieceIndex = BytesToInt(message.payload);
                     piecesAvailability_.SetPieceAvailability(pieceIndex);
                     break;
                 }
                 case MessageId::Piece:
                 {
+                    std::cout << "Piece" << std::endl;
                     size_t index = BytesToInt(message.payload.substr(0, 4));
                     size_t offset = BytesToInt(message.payload.substr(4, 4));
 
@@ -135,11 +137,13 @@ void PeerConnect::MainLoop() {
                 }
                 case MessageId::Choke:
                 {
+                    std::cout << "Choke" << std::endl;
                     choked_ = true;
                     break;
                 }
                 case MessageId::Unchoke:
                 {
+                    std::cout << "Unchoke" << std::endl;
                     choked_ = false;
                     break;
                 }
@@ -148,6 +152,7 @@ void PeerConnect::MainLoop() {
             }
 
             if (!pendingBlock_ && !choked_) {
+                std::cout << "debug peer_connect" << std::endl;
                 RequestPiece();
             }
 
@@ -163,25 +168,44 @@ void PeerConnect::RequestPiece() {
     if (!pieceInProgress_) {
         pieceInProgress_ = pieceStorage_.GetNextPieceToDownload();
     }
-
-    if (pieceInProgress_) {
-        Block* block = pieceInProgress_->FirstMissingBlock();
-        block->status = Block::Status::Pending;
-
-        char buff[12];
-        uint32_t index = htonl(block->piece);
-        uint32_t offset = htonl(block->offset);
-        uint32_t length = htonl(block->length);
-        std::memcpy(buff, &index, sizeof(int));
-        std::memcpy(buff + 4, &offset, sizeof(int));
-        std::memcpy(buff + 8, &length, sizeof(int));
-        std::string requestString;
-        requestString.reserve(12);
-        for (int i = 0; i < 12; i++)
-            requestString += (char) buff[i];
-        socket_.SendData(requestString);
-        pendingBlock_ = true;
+    bool allBlocksRetrieved;
+    while (pieceInProgress_ and ((allBlocksRetrieved = pieceInProgress_->AllBlocksRetrieved()) or
+                                 !piecesAvailability_.IsPieceAvailable(pieceInProgress_->GetIndex()))) {
+        if (allBlocksRetrieved)
+            pieceStorage_.PieceProcessed(pieceInProgress_);
+        pieceInProgress_ = pieceStorage_.GetNextPieceToDownload();
     }
+    if (!pieceInProgress_) {
+        Terminate();
+        return;
+    }
+    auto block = pieceInProgress_->FirstMissingBlock();
+
+    std::string msgPayload;
+    msgPayload += (block->piece, false);
+    msgPayload += IntToBytes(block->offset, false);
+    msgPayload += IntToBytes(block->length, false);
+    socket_.SendData(Message::Init(MessageId::Request, msgPayload).ToString());
+    pendingBlock_ = true;
+
+    // if (pieceInProgress_) {
+    //     Block* block = pieceInProgress_->FirstMissingBlock();
+    //     block->status = Block::Status::Pending;
+
+    //     char buff[12];
+    //     uint32_t index = htonl(block->piece);
+    //     uint32_t offset = htonl(block->offset);
+    //     uint32_t length = htonl(block->length);
+    //     std::memcpy(buff, &index, sizeof(int));
+    //     std::memcpy(buff + 4, &offset, sizeof(int));
+    //     std::memcpy(buff + 8, &length, sizeof(int));
+    //     std::string requestString;
+    //     requestString.reserve(12);
+    //     for (int i = 0; i < 12; i++)
+    //         requestString += (char) buff[i];
+    //     socket_.SendData(requestString);
+    //     pendingBlock_ = true;
+    // }
 }
 
 

@@ -17,5 +17,3 @@ struct TorrentFile {
 };
 
 TorrentFile LoadTorrentFile(const std::string& filename);
-
-using TorElemPtr = std::shared_ptr<Bencode::TorElement>;

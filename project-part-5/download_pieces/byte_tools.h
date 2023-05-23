@@ -14,3 +14,7 @@ int BytesToInt(std::string_view bytes);
 std::string CalculateSHA1(const std::string& msg);
 
 std::string IntToBytesBigEndian(uint32_t value);
+
+std::string IntToBytesLittleEndian(uint32_t value);
+
+std::string IntToBytes(uint32_t num, bool isHost);
