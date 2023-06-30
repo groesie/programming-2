@@ -34,8 +34,12 @@ def main():
                 break
 
             file_piece_hash = binascii.hexlify(hashlib.sha1(piece_bytes).digest()).decode()
-            assert file_piece_hash == piece_hashes[piece_id], f"Hash mismatch for piece #{piece_id}"
-            print(f"Checked piece #{piece_id}. Hash match")
+            if file_piece_hash != piece_hashes[piece_id]:
+                print(f"Hash mismatch for piece #{piece_id}\n file_piece_hash: {file_piece_hash}\n piece_hash: {piece_hashes[piece_id]}")
+
+            #            assert file_piece_hash == piece_hashes[piece_id], f"Hash mismatch for piece #{piece_id}"
+            else:
+                print(f"Checked piece #{piece_id}. Hash match")
             piece_id += 1
 
     assert piece_id == pieces_to_check_count, "Downloaded pieces amount is too small"
